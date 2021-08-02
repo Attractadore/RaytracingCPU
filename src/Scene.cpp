@@ -1,51 +1,54 @@
 #include "Scene.hpp"
 #include "Intersectable.hpp"
 #include "Material.hpp"
+#include "Util/Math.hpp"
 
 #include <cmath>
 
 bool sceneHasIntersection(const Scene& scene, Ray r) {
     for (auto mo: scene.objects) {
-        auto intersection_opt = mo->object->intersectDistance(r);
-        if (intersection_opt && intersection_opt.value() > scene.eps) {
+        float t = mo->object->intersectDistance(r);
+        assert(std::isfinite(t));
+        if (t > scene.eps) {
             return true;
         }
     }
+
     return false;
 }
 
-std::optional<MaterialIntersection> sceneIntersectMaterial(const Scene& scene, Ray r) {
-    MaterialIntersection nearest_intersection;
+Intersection sceneIntersect(const Scene& scene, Ray r) {
+    Intersection nearest_intersection;
 
     for (auto mo: scene.objects) {
-        auto is_opt = mo->intersect(r);
-        if (is_opt) {
-            MaterialIntersection intersection = is_opt.value();
-            if (intersection.t > scene.eps && intersection.t < nearest_intersection.t) {
-                nearest_intersection = intersection;
-            }
+        auto intersection = mo->object->intersect(r);
+        if (intersection && inInterval(scene.eps, nearest_intersection.t, intersection.t)) {
+            nearest_intersection = intersection;
         }
     }
 
-    if (std::isfinite(nearest_intersection.t)) {
-        return nearest_intersection;
+    return nearest_intersection;
+}
+
+MaterialIntersection sceneIntersectMaterial(const Scene& scene, Ray r) {
+    MaterialIntersection nearest_intersection;
+
+    for (auto mo: scene.objects) {
+        auto intersection = mo->intersect(r);
+        if (intersection && inInterval(scene.eps, nearest_intersection.t, intersection.t)) {
+            nearest_intersection = intersection;
+        }
     }
 
-    return {};
+    return nearest_intersection;
 }
 
 glm::vec3 sceneIntersectColor(const Scene& scene, Ray r) {
-    return sceneIntersectColor(scene, r, scene.camera.position);
-}
+    auto intersection = sceneIntersectMaterial(scene, r);
 
-glm::vec3 sceneIntersectColor(const Scene& scene, Ray r, glm::vec3 eye_position) {
-    auto intersection_opt = sceneIntersectMaterial(scene, r);
-     
-    if (!intersection_opt) {
+    if (!intersection) {
         return glm::vec3{0.0f};
     }
 
-    auto intersection = intersection_opt.value();
-
-    return intersection.material->evaluate(intersection.input, scene, eye_position);
+    return intersection.material->evaluate(intersection.input, scene);
 }

@@ -3,8 +3,8 @@
 #include "Material.hpp"
 #include "MaterialFactory.hpp"
 #include "Scene.hpp"
-#include "Util/Math.hpp"
 #include "Util/Color.hpp"
+#include "Util/Math.hpp"
 
 #include <SDL2/SDL.h>
 #include <glm/glm.hpp>
@@ -25,7 +25,7 @@ std::vector<Ray> generateScreenRays(unsigned width, unsigned height, glm::mat4 p
     return rays;
 }
 
-Uint32 mapRGB(glm::vec3 pixel, SDL_PixelFormat const* pixel_format) {
+Uint32 mapRGB(glm::vec3 pixel, const SDL_PixelFormat* pixel_format) {
     pixel = linearToSrgb(pixel);
     pixel = glm::clamp(pixel, 0.0f, 1.0f);
     glm::uvec3 upixel = float(std::numeric_limits<Uint8>::max()) * pixel;
@@ -34,9 +34,10 @@ Uint32 mapRGB(glm::vec3 pixel, SDL_PixelFormat const* pixel_format) {
 
 void setSurfacePixels(SDL_Surface* surface, const std::vector<glm::vec3>& pixels) {
     assert(pixels.size() == surface->w * surface->h);
-    Uint32* surface_pixels = (Uint32*) surface->pixels;
+    Uint32* surface_pixels = static_cast<Uint32*>(surface->pixels);
+    glm::vec3 average = reinhardAverage(pixels);
     for (unsigned i = 0; i < surface->w * surface->h; i++) {
-        surface_pixels[i] = mapRGB(pixels[i], surface->format);
+        surface_pixels[i] = mapRGB(reinhardToneMap(pixels[i], average), surface->format);
     }
 }
 
@@ -50,27 +51,34 @@ int main() {
     SDL_Window* window = SDL_CreateWindow("RayTracing", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
     std::vector<glm::vec3> pixels(width * height);
 
-    auto blue   = makeMaterial("BlueMaterial");
+    auto blue = makeMaterial("BlueMaterial");
     auto mirror = makeMaterial("MirrorMaterial");
     auto marble = makeMaterial("MarbleMaterial");
-    auto grey   = makeMaterial("GreyMaterial");
+    auto grey = makeMaterial("GreyMaterial");
+    auto gold = makeMaterial("GoldMaterial");
 
-    Sphere blue_sphere{glm::translate(glm::mat4(1.0f), {0.0f, 0.0f, 1.0f})};
-    MaterialIntersectable blue_material_sphere{
-        .object = &blue_sphere,
-        .material = blue.get(),
+    Sphere marble_sphere{glm::translate(glm::mat4(1.0f), {0.0f, 0.0f, 1.0f})};
+    MaterialIntersectable marble_material_sphere{
+        .object = &marble_sphere,
+        .material = marble.get(),
     };
 
-    Sphere red_sphere{glm::translate(glm::mat4(1.0f), {-3.0f, 4.0f, 1.0f})};
-    MaterialIntersectable red_material_sphere{
-        .object = &red_sphere,
+    Sphere gold_sphere{glm::translate(glm::mat4(1.0f), {-3.0f, 2.0f, 1.0f})};
+    MaterialIntersectable gold_material_sphere{
+        .object = &gold_sphere,
+        .material = gold.get(),
+    };
+
+    Sphere mirror_sphere{glm::translate(glm::mat4(1.0f), {4.0f, -3.0f, 1.0f})};
+    MaterialIntersectable mirror_material_sphere{
+        .object = &mirror_sphere,
         .material = mirror.get(),
     };
 
-    Sphere yellow_sphere{glm::translate(glm::mat4(1.0f), {4.0f, -3.0f, 1.0f})};
-    MaterialIntersectable yellow_material_sphere{
-        .object = &yellow_sphere,
-        .material = marble.get(),
+    Sphere blue_sphere{glm::translate(glm::mat4(1.0f), {-2.0f, -3.0f, 1.0f})};
+    MaterialIntersectable blue_material_sphere{
+        .object = &blue_sphere,
+        .material = blue.get(),
     };
 
     Plane grey_plane{};
@@ -80,15 +88,15 @@ int main() {
         .material = grey.get(),
     };
 
-    DirectionalLight sun{{1.0f, 1.0f, 0.9f},
+    DirectionalLight sun{glm::vec3{10.0f, 10.0f, 9.0f},
                          glm::normalize(glm::vec3{1.0f, 0.0f, -1.0f})};
 
     Scene scene = {
-        .objects = {&blue_material_sphere, &red_material_sphere, &yellow_material_sphere, &grey_material_plane},
+        .objects = {&marble_material_sphere, &gold_material_sphere, &mirror_material_sphere, &blue_material_sphere, &grey_material_plane},
         .lights = {&sun},
         .camera = {
-            .position{-10.0f, 0.0f, 2.0f},
-            .direction{1.0f, 0.0f, 0.0f},
+            .position{-10.0f, 0.0f, 5.0f},
+            .direction = glm::normalize(glm::vec3{10.0f, 0.0f, -5.0f}),
             .up{0.0f, 0.0f, 1.0f},
         },
         .eps = 0.001f,

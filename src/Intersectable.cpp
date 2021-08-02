@@ -6,7 +6,7 @@
 
 static MaterialInput sphereIntersection(Sphere s, glm::vec3 position) {
     float u = glm::atan(position.y, position.x) / glm::pi<float>();
-    float v = glm::asin(position.z)  / glm::half_pi<float>();
+    float v = glm::asin(position.z) / glm::half_pi<float>();
     return {
         .position = s.trans.model * glm::vec4{position, 1.0f},
         .normal = glm::normalize(s.trans.normal * position),
@@ -14,19 +14,19 @@ static MaterialInput sphereIntersection(Sphere s, glm::vec3 position) {
     };
 }
 
-bool Sphere::hasIntersection(Ray r) {
+bool Sphere::hasIntersection(Ray r) const {
     return bool{intersect(r)};
 }
 
-std::optional<float> Sphere::intersectDistance(Ray r) {
+float Sphere::intersectDistance(Ray r) const {
     auto intersection = intersect(r);
     if (intersection) {
-        return intersection.value().t;
+        return intersection.t;
     }
-    return {};
+    return false;
 }
 
-std::optional<Intersection> Sphere::intersect(Ray r) {
+Intersection Sphere::intersect(Ray r) const {
     r = rayTransform(r, trans.model_inv);
 
     // r.origin + t * r.direction = 1
@@ -39,13 +39,27 @@ std::optional<Intersection> Sphere::intersect(Ray r) {
 
     if (D > 0.0f) {
         float sD = glm::sqrt(D);
-        float n = -b - sD;
-        if (n > 0.0f) {
-            return Intersection{sphereIntersection(*this, rayAdvance(r, n)), n};
+        {
+            float n = -b - sD;
+            if (n > 0.0f) {
+                Intersection intersection{
+                    sphereIntersection(*this, rayAdvance(r, n)),
+                    n};
+                intersection.input.object = this;
+                intersection.input.incident = rayTransform(r, trans.model).direction;
+                return intersection;
+            }
         }
-        float f = -b + sD;
-        if (f > 0.0f) {
-            return Intersection{sphereIntersection(*this, rayAdvance(r, f)), f};
+        {
+            float f = -b + sD;
+            if (f > 0.0f) {
+                Intersection intersection{
+                    sphereIntersection(*this, rayAdvance(r, f)),
+                    f};
+                intersection.input.object = this;
+                intersection.input.incident = rayTransform(r, trans.model).direction;
+                return intersection;
+            }
         }
     }
 
@@ -59,34 +73,36 @@ static MaterialInput planeIntersection(Plane p, glm::vec3 position) {
     };
 }
 
-bool Plane::hasIntersection(Ray r) {
+bool Plane::hasIntersection(Ray r) const {
     return bool{intersect(r)};
 }
 
-std::optional<float> Plane::intersectDistance(Ray r) {
+float Plane::intersectDistance(Ray r) const {
     auto intersection = intersect(r);
     if (intersection) {
-        return intersection.value().t;
+        return intersection.t;
     }
-    return {};
+    return false;
 }
 
-std::optional<Intersection> Plane::intersect(Ray r) {
+Intersection Plane::intersect(Ray r) const {
     r = rayTransform(r, trans.model_inv);
 
     // (r.origin + t * r.direction) * (0, 0, 1) = 0
     float t = -r.origin.z / r.direction.z;
 
     if (t > 0.0f) {
-        return Intersection{planeIntersection(*this, rayAdvance(r, t)), t};
+        Intersection intersection{
+            planeIntersection(*this, rayAdvance(r, t)),
+            t};
+        intersection.input.object = this;
+        intersection.input.incident = rayTransform(r, trans.model).direction;
+        return intersection;
     }
+
     return {};
 }
 
-std::optional<MaterialIntersection> MaterialIntersectable::intersect(Ray r) {
-    auto is = object->intersect(r);
-    if (is) {
-        return MaterialIntersection{material, is.value()};
-    }
-    return {};
+MaterialIntersection MaterialIntersectable::intersect(Ray r) const {
+    return MaterialIntersection{material, object->intersect(r)};
 }

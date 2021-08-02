@@ -6,7 +6,7 @@
 
 struct MaterialMap {
     ~MaterialMap() {
-        for (auto& [_, handle] : loaded) {
+        for (auto& [_, handle]: loaded) {
             dlclose(handle);
         }
     }

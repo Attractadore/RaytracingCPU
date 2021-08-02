@@ -2,5 +2,10 @@
 
 #include <limits>
 
+Intersection::Intersection():
+    input{}, t{std::numeric_limits<float>::infinity()} {
+}
+
 MaterialIntersection::MaterialIntersection():
-    t{std::numeric_limits<float>::infinity()} {}
+    material{}, input{}, t{std::numeric_limits<float>::infinity()} {
+}

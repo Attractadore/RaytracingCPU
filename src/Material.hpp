@@ -7,10 +7,10 @@ struct Scene;
 struct Light;
 
 struct Material {
-    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene, glm::vec3 eye_position) = 0;
+    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene) const = 0;
 };
 
-struct PerLightMaterial : public Material {
-    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene, glm::vec3 eye_position) override;
-    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene, glm::vec3 eye_position, const Light* light) = 0;
+struct PerLightMaterial: public Material {
+    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene) const override;
+    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene, const Light* light) const = 0;
 };

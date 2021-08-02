@@ -10,3 +10,9 @@ Ray rayTransform(Ray r, glm::mat4 t) {
 glm::vec3 rayAdvance(Ray r, float t) {
     return r.origin + t * r.direction;
 }
+
+Ray rayAdvanced(Ray r, float t) {
+    return {
+        .origin = rayAdvance(r, t),
+        .direction = r.direction};
+}

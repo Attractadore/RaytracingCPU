@@ -1,9 +1,7 @@
 #pragma once
+#include "Intersection.hpp"
 #include "Ray.hpp"
 #include "Transform.hpp"
-#include "Intersection.hpp"
-
-#include <optional>
 
 struct Intersectable {
     Transform trans;
@@ -11,9 +9,9 @@ struct Intersectable {
     Intersectable(glm::mat4 model):
         trans{model} {}
 
-    virtual bool hasIntersection(Ray r) = 0;
-    virtual std::optional<float> intersectDistance(Ray r) = 0;
-    virtual std::optional<Intersection> intersect(Ray r) = 0;
+    virtual bool hasIntersection(Ray r) const = 0;
+    virtual float intersectDistance(Ray r) const = 0;
+    virtual Intersection intersect(Ray r) const = 0;
 };
 
 struct Sphere: public Intersectable {
@@ -22,9 +20,9 @@ struct Sphere: public Intersectable {
     Sphere(glm::mat4 model):
         Intersectable{model} {}
 
-    virtual bool hasIntersection(Ray r) override;
-    virtual std::optional<float> intersectDistance(Ray r) override;
-    virtual std::optional<Intersection> intersect(Ray r) override;
+    virtual bool hasIntersection(Ray r) const override;
+    virtual float intersectDistance(Ray r) const override;
+    virtual Intersection intersect(Ray r) const override;
 };
 
 struct Plane: Intersectable {
@@ -33,14 +31,14 @@ struct Plane: Intersectable {
     Plane(glm::mat4 model):
         Intersectable{model} {}
 
-    virtual bool hasIntersection(Ray r) override;
-    virtual std::optional<float> intersectDistance(Ray r) override;
-    virtual std::optional<Intersection> intersect(Ray r) override;
+    virtual bool hasIntersection(Ray r) const override;
+    virtual float intersectDistance(Ray r) const override;
+    virtual Intersection intersect(Ray r) const override;
 };
 
 struct MaterialIntersectable {
     Intersectable* object;
     Material* material;
 
-    std::optional<MaterialIntersection> intersect(Ray r);
+    MaterialIntersection intersect(Ray r) const;
 };
