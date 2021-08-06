@@ -10,6 +10,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <execution>
+
 std::vector<Ray> generateScreenRays(unsigned width, unsigned height, glm::mat4 proj_view_inv, glm::vec3 origin) {
     std::vector<Ray> rays;
     rays.reserve(width * height);
@@ -19,7 +21,7 @@ std::vector<Ray> generateScreenRays(unsigned width, unsigned height, glm::mat4 p
             float f_x = linearRemap(0, width - 1, -1.0f, 1.0f, x);
             glm::vec4 world = proj_view_inv * glm::vec4{f_x, f_y, 0.0f, 1.0f};
             glm::vec3 direction = glm::normalize(glm::vec3{world / world.w} - origin);
-            rays.push_back({.origin = origin, .direction = direction});
+            rays.emplace_back(origin, direction, 3);
         }
     }
     return rays;
@@ -120,7 +122,7 @@ int main() {
         }
 
         auto rays = generateScreenRays(width, height, proj_view_inv, scene.camera.position);
-        std::transform(rays.begin(), rays.end(), pixels.begin(), [&](Ray r) {
+        std::transform(std::execution::par_unseq, rays.begin(), rays.end(), pixels.begin(), [&](Ray r) {
             return sceneIntersectColor(scene, r);
         });
 

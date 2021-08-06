@@ -1,10 +1,13 @@
 #include "Ray.hpp"
 
+Ray::Ray(glm::vec3 o, glm::vec3 d): 
+        origin{o}, direction{d}, bounces{1} {}
+
+Ray::Ray(glm::vec3 o, glm::vec3 d, unsigned b):
+        origin{o}, direction{d}, bounces{b} {}
+
 Ray rayTransform(Ray r, glm::mat4 t) {
-    return {
-        .origin = t * glm::vec4{r.origin, 1.0f},
-        .direction = t * glm::vec4{r.direction, 0.0f},
-    };
+    return Ray{t * glm::vec4{r.origin, 1.0f},t * glm::vec4{r.direction, 0.0f}, r.bounces};
 }
 
 glm::vec3 rayAdvance(Ray r, float t) {
@@ -12,7 +15,5 @@ glm::vec3 rayAdvance(Ray r, float t) {
 }
 
 Ray rayAdvanced(Ray r, float t) {
-    return {
-        .origin = rayAdvance(r, t),
-        .direction = r.direction};
+    return Ray{rayAdvance(r, t), r.direction, r.bounces};
 }

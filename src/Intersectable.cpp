@@ -47,6 +47,7 @@ Intersection Sphere::intersect(Ray r) const {
                     n};
                 intersection.input.object = this;
                 intersection.input.incident = rayTransform(r, trans.model).direction;
+                intersection.input.bounces = r.bounces;
                 return intersection;
             }
         }
@@ -58,6 +59,7 @@ Intersection Sphere::intersect(Ray r) const {
                     f};
                 intersection.input.object = this;
                 intersection.input.incident = rayTransform(r, trans.model).direction;
+                intersection.input.bounces = r.bounces;
                 return intersection;
             }
         }
@@ -97,6 +99,7 @@ Intersection Plane::intersect(Ray r) const {
             t};
         intersection.input.object = this;
         intersection.input.incident = rayTransform(r, trans.model).direction;
+        intersection.input.bounces = r.bounces;
         return intersection;
     }
 

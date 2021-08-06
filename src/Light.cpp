@@ -6,6 +6,6 @@ glm::vec3 DirectionalLight::getDirection(glm::vec3) const {
 }
 
 float DirectionalLight::getIntensity(const Scene& scene, glm::vec3 origin) const {
-    Ray r = {.origin = origin, .direction = -direction};
+    Ray r{origin, -direction};
     return !sceneHasIntersection(scene, r);
 };
