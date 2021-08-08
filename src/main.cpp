@@ -10,7 +10,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <atomic>
 #include <execution>
+#include <iostream>
 
 std::vector<Ray> generateScreenRays(unsigned width, unsigned height, glm::mat4 proj_view_inv, glm::vec3 origin) {
     std::vector<Ray> rays;
@@ -51,7 +53,6 @@ int main() {
     SDL_Init(SDL_INIT_EVERYTHING);
 
     SDL_Window* window = SDL_CreateWindow("RayTracing", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
-    std::vector<glm::vec3> pixels(width * height);
 
     auto blue = makeMaterial("BlueMaterial");
     auto mirror = makeMaterial("MirrorMaterial");
@@ -112,6 +113,11 @@ int main() {
 
     glm::mat4 proj_view_inv = glm::inverse(proj * view);
 
+    unsigned num_acc_samples = 0;
+    unsigned num_samples = 64;
+    std::vector<glm::vec3> accumulated_colors(width * height, glm::vec3{0.0f});
+    std::vector<glm::vec3> pixels(width * height);
+
     bool exit = false;
     while (!exit) {
         SDL_Event e;
@@ -122,8 +128,17 @@ int main() {
         }
 
         auto rays = generateScreenRays(width, height, proj_view_inv, scene.camera.position);
-        std::transform(std::execution::par_unseq, rays.begin(), rays.end(), pixels.begin(), [&](Ray r) {
-            return sceneIntersectColor(scene, r);
+        std::transform(std::execution::par_unseq, rays.begin(), rays.end(), accumulated_colors.begin(), accumulated_colors.begin(), [&](Ray r, glm::vec3 color) {
+            for (unsigned i = 0; i < num_samples; i++) {
+                color += sceneIntersectColor(scene, r);
+            }
+            return color;
+        });
+        num_acc_samples += num_samples;
+
+
+        std::transform(std::execution::par_unseq, accumulated_colors.begin(), accumulated_colors.end(), pixels.begin(), [=](glm::vec3 accumulated_color) {
+            return accumulated_color / float(num_acc_samples);
         });
 
         SDL_Surface* window_surface = SDL_GetWindowSurface(window);

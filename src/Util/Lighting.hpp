@@ -10,6 +10,13 @@ glm::vec3 blinnPhong(
     float specular_hardness
 );
 
+struct GGXSample {
+    glm::vec3 normal;
+    float pdf;
+};
+
+GGXSample ggxImportanceSample(glm::vec3 normal, glm::vec3 view, float roughness);
+
 glm::vec3 cookTorrance(
     glm::vec3 normal,
     glm::vec3 light_dir,

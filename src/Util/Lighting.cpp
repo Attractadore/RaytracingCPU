@@ -1,7 +1,11 @@
 #include "Lighting.hpp"
 
 #include <glm/geometric.hpp>
+#include <glm/trigonometric.hpp>
 #include <glm/gtc/constants.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <random>
 
 glm::vec3 blinnPhong(
     glm::vec3 incident,
@@ -32,6 +36,10 @@ glm::vec3 blinnPhong(glm::vec3 normal, glm::vec3 light_dir, glm::vec3 view_dir, 
 }
 
 namespace {
+std::random_device rd;
+std::mt19937 gen{rd()};
+std::uniform_real_distribution dis{0.0f, 1.0f};
+
 float posChar(float x) {
     return x > 0.0f;
 }
@@ -41,9 +49,15 @@ float ggxDistribution(glm::vec3 n, glm::vec3 m, float a) {
     float n_dot_m2 = n_dot_m * n_dot_m;
     float a2 = a * a;
     float nom = posChar(n_dot_m) * a2;
-    float denom = (1.0f + n_dot_m2 * (a2 - 1.0f)); 
-    denom *= denom;
-    denom *= glm::pi<float>();
+    float denom = 1.0f + n_dot_m2 * (a2 - 1.0f); 
+    denom = glm::pi<float>() * denom * denom;
+    return nom / denom;
+}
+
+float ggxPDF(float cos_theta, float cos_theta2, float sin_theta, float a2) {
+    float nom = a2 * cos_theta;
+    float denom = 1.0f + cos_theta2 * (a2 - 1.0f);
+    denom = glm::pi<float>() * denom * denom;
     return nom / denom;
 }
 
@@ -71,13 +85,39 @@ float microfacetBRDF(glm::vec3 n, glm::vec3 l, glm::vec3 v, float roughness) {
     float n_dot_l = glm::max(glm::dot(n, l), 0.0f);
     float n_dot_v = glm::max(glm::dot(n, v), 0.0f);
     float D = ggxDistribution(n, h, a);
-    float G = 0.5f / glm::mix(2.0f * n_dot_l * n_dot_v, n_dot_l + n_dot_v, a);
+    float G = 0.5f / glm::max(glm::mix(2.0f * n_dot_l * n_dot_v, n_dot_l + n_dot_v, a), 0.01f);
+    assert(!glm::isnan(G * D));
     return glm::min(G * D, 1.0f);
 }
 
 glm::vec3 lambertDiffuse(glm::vec3 diffuse) {
     return diffuse / glm::pi<float>();
 }
+}
+
+GGXSample ggxImportanceSample(glm::vec3 normal, glm::vec3 view, float roughness) {
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float rand_theta = dis(gen);
+    float rand_phi = dis(gen);
+    float cos_theta2 = (1.0f - rand_theta) / (rand_theta * (a2 - 1.0f) + 1.0f);
+    float sin_theta2 = 1.0f - cos_theta2;
+    float cos_theta = glm::sqrt(cos_theta2);
+    float sin_theta = glm::sqrt(sin_theta2);
+    float pdf = ggxPDF(cos_theta, cos_theta2, sin_theta, a2);
+    float phi = glm::two_pi<float>() * rand_phi;
+    float sin_phi = glm::sin(phi);
+    float cos_phi = glm::cos(phi);
+    glm::vec3 direction{sin_theta * cos_phi, sin_theta * sin_phi, cos_theta};
+    glm::vec3 default_normal{0.0f, 0.0f, 1.0f};
+    if (normal != default_normal) {
+        glm::vec3 rotate_axis = glm::normalize(glm::cross(default_normal, normal));
+        float rotate_angle = glm::acos(glm::dot(default_normal, normal));
+        glm::mat3 rotate = glm::rotate(glm::mat4{1.0f}, rotate_angle, rotate_axis);
+        direction = rotate * direction;
+    }
+    pdf = glm::max(pdf / (4.0f * glm::dot(view, direction)), 0.01f);
+    return {.normal = direction, .pdf = pdf};
 }
 
 glm::vec3 cookTorrance(glm::vec3 normal, glm::vec3 light_dir, glm::vec3 view_dir, glm::vec3 diffuse, float roughness, float metallic, float eta, float solid_angle) {

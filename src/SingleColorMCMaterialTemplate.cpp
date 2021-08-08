@@ -1,10 +1,9 @@
 #pragma once
 #include "SingleColorCTMaterialTemplate.cpp"
+#include "Util/Lighting.hpp"
 
 #include <glm/gtc/constants.hpp>
 #include <glm/trigonometric.hpp>
-
-#include <random>
 
 template <
     glm::vec3 diffuse,
@@ -15,20 +14,6 @@ template <
 struct SingleColorMCMaterial: public SingleColorCTMaterial<diffuse, roughness, metallic, eta> {
     virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene) const override;
 };
-
-glm::vec3 randomDirection(glm::vec3 normal) {
-    std::random_device rd;
-    std::mt19937 gen{rd()};
-    std::uniform_real_distribution dis{-1.0f, 1.0f};
-    float theta = glm::pi<float>() * dis(gen);
-    float z = dis(gen);
-    float u = glm::sqrt(1.0f - z * z);
-    glm::vec3 dir{u * glm::cos(theta), u * glm::sin(theta), z};
-    if (glm::dot(normal, dir) < 0.0f) {
-        dir = -dir;
-    }
-    return dir;
-}
 
 template <
     glm::vec3 diffuse,
@@ -42,10 +27,11 @@ glm::vec3 SingleColorMCMaterial<diffuse, roughness, metallic, eta>::evaluate(Mat
         glm::vec3 incident = input.incident;
         glm::vec3 position = input.position;
         glm::vec3 normal = input.normal;
-        Ray r{position, randomDirection(normal), input.bounces - 1};
-        color += sceneIntersectColor(scene, r) * cookTorrance(normal, r.direction, -incident, diffuse, roughness, metallic, eta, glm::two_pi<float>());
+        GGXSample sample = ggxImportanceSample(normal, -incident, roughness);
+        glm::vec3 reflect = glm::reflect(-incident, sample.normal);
+        Ray r{position, reflect, input.bounces - 1};
+        color = sceneIntersectColor(scene, r) * cookTorrance(normal, reflect, -incident, diffuse, roughness, metallic, eta, glm::two_pi<float>()) / sample.pdf;
     }
-    //color += SingleColorCTMaterial<diffuse, roughness, metallic, eta>::evaluate(input, scene);
     color += PerLightMaterial::evaluate(input, scene);
     return color;
 }
