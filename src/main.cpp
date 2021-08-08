@@ -137,7 +137,6 @@ int main() {
         });
         num_acc_samples += num_samples;
 
-
         std::transform(policy, accumulated_colors.begin(), accumulated_colors.end(), pixels.begin(), [=](glm::vec3 accumulated_color) {
             return accumulated_color / float(num_acc_samples);
         });

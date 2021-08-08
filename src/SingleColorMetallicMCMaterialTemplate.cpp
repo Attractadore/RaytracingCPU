@@ -3,6 +3,5 @@
 
 template <
     glm::vec3 diffuse,
-    float roughness
->
+    float roughness>
 struct SingleColorMetallicMCMaterial: public SingleColorMCMaterial<diffuse, roughness, 1.0f, 1.0f> {};

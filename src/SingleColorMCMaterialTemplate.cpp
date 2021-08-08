@@ -9,8 +9,7 @@ template <
     glm::vec3 diffuse,
     float roughness,
     float metallic,
-    float eta
->
+    float eta>
 struct SingleColorMCMaterial: public SingleColorCTMaterial<diffuse, roughness, metallic, eta> {
     virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene) const override;
 };
@@ -19,8 +18,7 @@ template <
     glm::vec3 diffuse,
     float roughness,
     float metallic,
-    float eta
->
+    float eta>
 glm::vec3 SingleColorMCMaterial<diffuse, roughness, metallic, eta>::evaluate(MaterialInput input, const Scene& scene) const {
     glm::vec3 color{0.0f};
     if (input.bounces > 1) {

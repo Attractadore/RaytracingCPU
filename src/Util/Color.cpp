@@ -14,11 +14,10 @@ glm::vec3 linearToSrgb(glm::vec3 color, float gamma) {
 }
 
 glm::vec3 reinhardAverage(const std::vector<glm::vec3>& pixels) {
-    glm::vec3 sum = std::accumulate(pixels.begin(), pixels.end(), glm::vec3{0.0f}, 
-        [](glm::vec3 s, glm::vec3 p) {
-            return s + glm::log2(0.01f + p);
-        }
-    );
+    glm::vec3 sum = std::accumulate(pixels.begin(), pixels.end(), glm::vec3{0.0f},
+                                    [](glm::vec3 s, glm::vec3 p) {
+                                        return s + glm::log2(0.01f + p);
+                                    });
     return glm::max(glm::exp(sum / float(pixels.size())), 0.01f);
 }
 

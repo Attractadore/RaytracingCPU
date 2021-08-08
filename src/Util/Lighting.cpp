@@ -2,9 +2,9 @@
 #include "Math.hpp"
 
 #include <glm/geometric.hpp>
-#include <glm/trigonometric.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/trigonometric.hpp>
 
 #include <random>
 
@@ -46,7 +46,7 @@ float ggxDistribution(glm::vec3 n, glm::vec3 m, float a) {
 
     float nom = a2;
 
-    float denom = 1.0f + n_dot_m2 * (a2 - 1.0f); 
+    float denom = 1.0f + n_dot_m2 * (a2 - 1.0f);
     denom = glm::max(glm::pi<float>() * denom * denom, eps);
     assert(!isNaNOrInf(denom));
 
@@ -102,7 +102,7 @@ float microfacetBRDF(glm::vec3 n, glm::vec3 l, glm::vec3 v, float roughness) {
 glm::vec3 lambertDiffuse(glm::vec3 diffuse) {
     return diffuse / glm::pi<float>();
 }
-}
+}  // namespace
 
 GGXSample ggxImportanceSample(glm::vec3 normal, glm::vec3 view, float roughness) {
     float a = roughness * roughness;
@@ -126,8 +126,7 @@ GGXSample ggxImportanceSample(glm::vec3 normal, glm::vec3 view, float roughness)
     float axis_length = glm::length(axis);
     if (axis_length < eps) {
         axis = glm::vec3{0.0f, 1.0f, 0.0f};
-    }
-    else {
+    } else {
         axis = axis / axis_length;
     }
     float angle = glm::acos(glm::dot(default_normal, normal));
@@ -152,8 +151,7 @@ glm::vec3 cookTorrance(glm::vec3 normal, glm::vec3 light, glm::vec3 view, glm::v
         glm::vec3 diffuse_term = lambertDiffuse(diffuse);
         float specular_term = microfacetBRDF(normal, light, view, roughness);
         return (kd * diffuse_term + ks * specular_term) * n_dot_l;
-    }
-    else {
+    } else {
         return glm::vec3{0.0f};
     }
 }

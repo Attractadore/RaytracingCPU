@@ -9,8 +9,7 @@ template <
     glm::vec3 diffuse,
     float roughness,
     float metallic,
-    float eta
->
+    float eta>
 struct SingleColorCTMaterial: public PerLightMaterial {
     virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene, const Light* light) const override;
 };
@@ -19,8 +18,7 @@ template <
     glm::vec3 diffuse,
     float roughness,
     float metallic,
-    float eta
->
+    float eta>
 glm::vec3 SingleColorCTMaterial<diffuse, roughness, metallic, eta>::evaluate(MaterialInput input, const Scene& scene, const Light* light) const {
     glm::vec3 incident = input.incident;
     glm::vec3 position = input.position;
