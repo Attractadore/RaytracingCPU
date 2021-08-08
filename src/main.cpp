@@ -114,9 +114,10 @@ int main() {
     glm::mat4 proj_view_inv = glm::inverse(proj * view);
 
     unsigned num_acc_samples = 0;
-    unsigned num_samples = 64;
+    unsigned num_samples = 16;
     std::vector<glm::vec3> accumulated_colors(width * height, glm::vec3{0.0f});
     std::vector<glm::vec3> pixels(width * height);
+    auto policy = std::execution::par_unseq;
 
     bool exit = false;
     while (!exit) {
@@ -128,7 +129,7 @@ int main() {
         }
 
         auto rays = generateScreenRays(width, height, proj_view_inv, scene.camera.position);
-        std::transform(std::execution::par_unseq, rays.begin(), rays.end(), accumulated_colors.begin(), accumulated_colors.begin(), [&](Ray r, glm::vec3 color) {
+        std::transform(policy, rays.begin(), rays.end(), accumulated_colors.begin(), accumulated_colors.begin(), [&](Ray r, glm::vec3 color) {
             for (unsigned i = 0; i < num_samples; i++) {
                 color += sceneIntersectColor(scene, r);
             }
@@ -137,7 +138,7 @@ int main() {
         num_acc_samples += num_samples;
 
 
-        std::transform(std::execution::par_unseq, accumulated_colors.begin(), accumulated_colors.end(), pixels.begin(), [=](glm::vec3 accumulated_color) {
+        std::transform(policy, accumulated_colors.begin(), accumulated_colors.end(), pixels.begin(), [=](glm::vec3 accumulated_color) {
             return accumulated_color / float(num_acc_samples);
         });
 

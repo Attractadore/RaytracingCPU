@@ -11,7 +11,7 @@ glm::vec3 blinnPhong(
 );
 
 struct GGXSample {
-    glm::vec3 normal;
+    glm::vec3 halfway;
     float pdf;
 };
 
@@ -24,8 +24,7 @@ glm::vec3 cookTorrance(
     glm::vec3 diffuse,
     float roughness,
     float metallic,
-    float eta,
-    float solid_angle
+    float eta
 );
 
 glm::vec3 cookTorranceAbstractLight(

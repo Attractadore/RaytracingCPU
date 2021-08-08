@@ -27,10 +27,11 @@ glm::vec3 SingleColorMCMaterial<diffuse, roughness, metallic, eta>::evaluate(Mat
         glm::vec3 incident = input.incident;
         glm::vec3 position = input.position;
         glm::vec3 normal = input.normal;
-        GGXSample sample = ggxImportanceSample(normal, -incident, roughness);
-        glm::vec3 reflect = glm::reflect(-incident, sample.normal);
+        auto [halfway, pdf] = ggxImportanceSample(normal, -incident, roughness);
+        glm::vec3 reflect = glm::reflect(incident, halfway);
         Ray r{position, reflect, input.bounces - 1};
-        color = sceneIntersectColor(scene, r) * cookTorrance(normal, reflect, -incident, diffuse, roughness, metallic, eta, glm::two_pi<float>()) / sample.pdf;
+        color = sceneIntersectColor(scene, r) *
+                cookTorrance(normal, reflect, -incident, diffuse, roughness, metallic, eta) / pdf;
     }
     color += PerLightMaterial::evaluate(input, scene);
     return color;
