@@ -12,21 +12,52 @@
 
 #include <atomic>
 #include <execution>
-#include <iostream>
+#include <random>
 
-std::vector<Ray> generateScreenRays(unsigned width, unsigned height, glm::mat4 proj_view_inv, glm::vec3 origin) {
+glm::mat4 generatePixelstoNDC(unsigned width, unsigned height) {
+    return glm::ortho(-0.5f, width - 0.5f, height - 0.5f, -0.5f);
+}
+
+namespace {
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_real_distribution dis(-0.5f, 0.5f);
+}  // namespace
+
+Ray generateRay(unsigned x, unsigned y, unsigned num_bounces, glm::mat4 unproj, glm::vec3 origin) {
+    glm::vec4 world = unproj * glm::vec4{x + dis(gen), y + dis(gen), 0.0f, 1.0f};
+    glm::vec3 direction = glm::normalize(glm::vec3{world / world.w} - origin);
+    return Ray(origin, direction, num_bounces);
+}
+
+std::vector<Ray> generateScreenRays(unsigned width, unsigned height, glm::mat4 unproj, glm::vec3 origin) {
     std::vector<Ray> rays;
     rays.reserve(width * height);
+    unproj = unproj * generatePixelstoNDC(width, height);
     for (unsigned y = 0; y < height; y++) {
-        float f_y = linearRemap(0, height - 1, 1.0f, -1.0f, y);
         for (unsigned x = 0; x < width; x++) {
-            float f_x = linearRemap(0, width - 1, -1.0f, 1.0f, x);
-            glm::vec4 world = proj_view_inv * glm::vec4{f_x, f_y, 0.0f, 1.0f};
-            glm::vec3 direction = glm::normalize(glm::vec3{world / world.w} - origin);
-            rays.emplace_back(origin, direction, 3);
+            rays.push_back(generateRay(x, y, 3, unproj, origin));
         }
     }
     return rays;
+}
+
+template <typename ExecutionPolicy>
+void accumulateColors(
+    ExecutionPolicy policy,
+    const Scene& scene,
+    unsigned width,
+    unsigned height,
+    unsigned num_samples,
+    glm::mat4 proj_view_inv,
+    std::vector<glm::vec3>& accumulated_colors) {
+    auto rays = generateScreenRays(width, height, proj_view_inv, scene.camera.position);
+    std::transform(policy, rays.begin(), rays.end(), accumulated_colors.begin(), accumulated_colors.begin(), [&](Ray r, glm::vec3 color) {
+        for (unsigned i = 0; i < num_samples; i++) {
+            color += sceneIntersectColor(scene, r);
+        }
+        return color;
+    });
 }
 
 Uint32 mapRGB(glm::vec3 pixel, const SDL_PixelFormat* pixel_format) {
@@ -128,13 +159,7 @@ int main() {
             }
         }
 
-        auto rays = generateScreenRays(width, height, proj_view_inv, scene.camera.position);
-        std::transform(policy, rays.begin(), rays.end(), accumulated_colors.begin(), accumulated_colors.begin(), [&](Ray r, glm::vec3 color) {
-            for (unsigned i = 0; i < num_samples; i++) {
-                color += sceneIntersectColor(scene, r);
-            }
-            return color;
-        });
+        accumulateColors(policy, scene, width, height, num_samples, proj_view_inv, accumulated_colors);
         num_acc_samples += num_samples;
 
         std::transform(policy, accumulated_colors.begin(), accumulated_colors.end(), pixels.begin(), [=](glm::vec3 accumulated_color) {
