@@ -59,9 +59,9 @@ float ggxPDF(glm::vec3 n, glm::vec3 m, float a) {
     return ggxDistribution(n, m, a) * n_dot_m;
 }
 
-glm::vec3 frenel(glm::vec3 n, glm::vec3 l, glm::vec3 f0) {
-    float n_dot_l = glm::dot(n, l);
-    return f0 + (1.0f - f0) * glm::pow(1 - n_dot_l, 5.0f);
+glm::vec3 fresnel(glm::vec3 n, glm::vec3 v, glm::vec3 f0) {
+    float n_dot_v = glm::dot(n, v);
+    return f0 + (1.0f - f0) * glm::pow(1 - n_dot_v, 5.0f);
 }
 
 float f0Dielectric(float eta) {
@@ -73,8 +73,8 @@ glm::vec3 f0Metal(glm::vec3 diffuse) {
     return diffuse;
 }
 
-glm::vec3 frenel(glm::vec3 n, glm::vec3 l, float eta, glm::vec3 diffuse, float metallic) {
-    return frenel(n, l, glm::mix(glm::vec3{f0Dielectric(eta)}, f0Metal(diffuse), metallic));
+glm::vec3 fresnel(glm::vec3 n, glm::vec3 v, float eta, glm::vec3 diffuse, float metallic) {
+    return fresnel(n, v, glm::mix(glm::vec3{f0Dielectric(eta)}, f0Metal(diffuse), metallic));
 }
 
 float microfacetBRDF(glm::vec3 n, glm::vec3 l, glm::vec3 v, float roughness) {
@@ -144,7 +144,7 @@ GGXSample ggxImportanceSample(glm::vec3 normal, glm::vec3 view, float roughness)
 }
 
 glm::vec3 cookTorrance(glm::vec3 normal, glm::vec3 light, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) {
-    glm::vec3 ks = frenel(normal, light, eta, diffuse, metallic);
+    glm::vec3 ks = fresnel(normal, view, eta, diffuse, metallic);
     glm::vec3 kd = (1.0f - ks) * (1.0f - metallic);
     float n_dot_l = glm::dot(normal, light);
     float n_dot_v = glm::dot(normal, view);
