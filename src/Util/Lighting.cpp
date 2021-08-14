@@ -1,6 +1,6 @@
 #include "Lighting.hpp"
-#include "Math.hpp"
 #include "../Scene.hpp"
+#include "Math.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/gtc/constants.hpp>
@@ -168,8 +168,7 @@ glm::vec3 cookTorranceGlobalIllumination(const Scene& scene, unsigned bounces, g
         Ray r{position, reflect, bounces - 1};
         return sceneIntersectColor(scene, r) *
                cookTorrance(normal, reflect, view, diffuse, roughness, metallic, eta) / pdf;
-    }
-    else {
+    } else {
         return glm::vec3{0.0f};
     }
 }

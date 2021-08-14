@@ -1,7 +1,7 @@
 #include "Material.hpp"
-#include "Util/Lighting.hpp"
-#include "Scene.hpp"
 #include "Light.hpp"
+#include "Scene.hpp"
+#include "Util/Lighting.hpp"
 
 glm::vec3 BlinnPhongMaterial::evaluate(MaterialInput input, const Scene& scene) const {
     glm::vec3 position = getPosition(input);

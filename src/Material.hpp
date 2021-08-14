@@ -43,7 +43,7 @@ protected:
     virtual glm::vec3 evaluate(const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta, const Light* light) const noexcept;
 };
 
-class MonteCarloCookTorranceMaterial : public virtual CookTorranceMaterial {
+class MonteCarloCookTorranceMaterial: public virtual CookTorranceMaterial {
 protected:
     virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const noexcept override;
 };
