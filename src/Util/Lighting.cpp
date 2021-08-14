@@ -1,5 +1,6 @@
 #include "Lighting.hpp"
 #include "Math.hpp"
+#include "../Scene.hpp"
 
 #include <glm/geometric.hpp>
 #include <glm/gtc/constants.hpp>
@@ -158,4 +159,17 @@ glm::vec3 cookTorrance(glm::vec3 normal, glm::vec3 light, glm::vec3 view, glm::v
 
 glm::vec3 cookTorranceAbstractLight(glm::vec3 normal, glm::vec3 light, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) {
     return cookTorrance(normal, light, view, diffuse, roughness, metallic, eta) * glm::pi<float>();
+}
+
+glm::vec3 cookTorranceGlobalIllumination(const Scene& scene, unsigned bounces, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) {
+    if (bounces > 1) {
+        auto [halfway, pdf] = ggxImportanceSample(normal, view, roughness);
+        glm::vec3 reflect = glm::reflect(-view, halfway);
+        Ray r{position, reflect, bounces - 1};
+        return sceneIntersectColor(scene, r) *
+               cookTorrance(normal, reflect, view, diffuse, roughness, metallic, eta) / pdf;
+    }
+    else {
+        return glm::vec3{0.0f};
+    }
 }

@@ -1,6 +1,8 @@
 #pragma once
 #include <glm/vec3.hpp>
 
+struct Scene;
+
 glm::vec3 blinnPhong(
     glm::vec3 normal,
     glm::vec3 light_dir,
@@ -29,6 +31,17 @@ glm::vec3 cookTorranceAbstractLight(
     glm::vec3 normal,
     glm::vec3 light_dir,
     glm::vec3 view_dir,
+    glm::vec3 diffuse,
+    float roughness,
+    float metallic,
+    float eta);
+
+glm::vec3 cookTorranceGlobalIllumination(
+    const Scene& scene,
+    unsigned bounces,
+    glm::vec3 position,
+    glm::vec3 normal,
+    glm::vec3 view,
     glm::vec3 diffuse,
     float roughness,
     float metallic,
