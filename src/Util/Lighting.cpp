@@ -1,5 +1,4 @@
 #include "Lighting.hpp"
-#include "Math.hpp"
 #include "Random.hpp"
 
 #include <glm/geometric.hpp>
@@ -34,21 +33,13 @@ float ggxMasking(glm::vec3 n, glm::vec3 s, float alpha) {
     return 1.0f / (1.0f + ggxLambda(n, s, alpha));
 }
 
-float ggxDistribution(glm::vec3 n, glm::vec3 m, float a) {
-    assert(!isNaNOrInf(n));
-    assert(!isNaNOrInf(m));
-    assert(!isNaNOrInf(a));
-
+float ggxDistribution(glm::vec3 n, glm::vec3 m, float alpha) {
     float n_dot_m = glm::dot(n, m);
     float n_dot_m2 = n_dot_m * n_dot_m;
-    float a2 = a * a;
-
-    float nom = a2;
-
-    float denom = 1.0f + n_dot_m2 * (a2 - 1.0f);
+    float alpha2 = alpha * alpha;
+    float nom = alpha2;
+    float denom = 1.0f + n_dot_m2 * (alpha2 - 1.0f);
     denom = glm::max(glm::pi<float>() * denom * denom, eps);
-    assert(!isNaNOrInf(denom));
-
     return nom / denom;
 }
 
@@ -135,25 +126,14 @@ float ggxVisibilityPDF(glm::vec3 n, glm::vec3 m, glm::vec3 v, float alpha) {
 }
 
 float microfacetBRDF(glm::vec3 n, glm::vec3 l, glm::vec3 v, float roughness) {
-    assert(!isNaNOrInf(n));
-    assert(!isNaNOrInf(l));
-    assert(!isNaNOrInf(v));
-    assert(!isNaNOrInf(roughness));
-
-    float a = roughness * roughness;
-    glm::vec3 m = glm::normalize(l + v);
-    assert(!isNaNOrInf(m));
+    float alpha = roughness * roughness;
     float n_dot_l = glm::dot(n, l);
     float n_dot_v = glm::dot(n, v);
-
-    float D = ggxDistribution(n, m, a);
-    float G = ggxGeometry(n, l, v, a);
+    glm::vec3 m = glm::normalize(l + v);
+    float D = ggxDistribution(n, m, alpha);
+    float G = ggxGeometry(n, l, v, alpha);
     float nom = G * D;
-    assert(!isNaNOrInf(nom));
-
     float denom = glm::max(4.0f * n_dot_l * n_dot_v, eps);
-    assert(!isNaNOrInf(denom));
-
     return glm::min(nom / denom, 1.0f);
 }
 
