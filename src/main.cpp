@@ -123,7 +123,7 @@ int main() {
     };
 
     DirectionalLight sun{glm::vec3{10.0f, 10.0f, 9.0f},
-                         glm::normalize(glm::vec3{1.0f, 0.0f, -1.0f})};
+                         glm::normalize(glm::vec3{0.0f, -1.0f, -1.0f})};
 
     Scene scene = {
         .objects = {&marble_material_sphere, &gold_material_sphere, &mirror_material_sphere, &blue_material_sphere, &grey_material_plane},
