@@ -17,6 +17,7 @@ struct GGXSample {
 };
 
 GGXSample ggxImportanceSample(glm::vec3 normal, glm::vec3 view, float roughness);
+GGXSample ggxVisibilityImportanceSample(glm::vec3 normal, glm::vec3 view, float roughness);
 
 glm::vec3 cookTorrance(
     glm::vec3 normal,

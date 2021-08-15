@@ -11,6 +11,7 @@ add_library(RayTracingLib SHARED
                "Util/Lighting.cpp"
                "Util/Math.cpp"
                "Util/Color.cpp"
+               "Util/Random.cpp"
 )
 target_link_libraries(RayTracingLib PUBLIC glm::glm PRIVATE dl)
 
