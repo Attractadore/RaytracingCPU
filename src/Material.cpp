@@ -57,6 +57,13 @@ glm::vec3 CookTorranceMaterial::evaluate(const Scene& scene, glm::vec3 position,
 }
 
 glm::vec3 MonteCarloCookTorranceMaterial::evaluate(MaterialInput input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const noexcept {
-    return cookTorranceGlobalIllumination(scene, input.bounces, position, normal, view, diffuse, roughness, metallic, eta) +
-           CookTorranceMaterial::evaluate(input, scene, position, normal, view, diffuse, roughness, metallic, eta);
+    glm::vec3 color = CookTorranceMaterial::evaluate(input, scene, position, normal, view, diffuse, roughness, metallic, eta);
+    if (input.bounces > 1) {
+        auto [halfway, pdf] = ggxVisibilityImportanceSample(normal, view, roughness);
+        glm::vec3 reflect = glm::reflect(-view, halfway);
+        Ray r{position, reflect, input.bounces - 1};
+        color += sceneIntersectColor(scene, r) *
+                 cookTorrance(normal, reflect, view, diffuse, roughness, metallic, eta) / pdf;
+    };
+    return color;
 }

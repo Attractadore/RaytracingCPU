@@ -36,14 +36,3 @@ glm::vec3 cookTorranceAbstractLight(
     float roughness,
     float metallic,
     float eta);
-
-glm::vec3 cookTorranceGlobalIllumination(
-    const Scene& scene,
-    unsigned bounces,
-    glm::vec3 position,
-    glm::vec3 normal,
-    glm::vec3 view,
-    glm::vec3 diffuse,
-    float roughness,
-    float metallic,
-    float eta);
