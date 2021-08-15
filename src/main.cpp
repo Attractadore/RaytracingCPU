@@ -43,21 +43,17 @@ std::vector<Ray> generateScreenRays(unsigned width, unsigned height, glm::mat4 u
 }
 
 template <typename ExecutionPolicy>
-void accumulateColors(
-    ExecutionPolicy policy,
-    const Scene& scene,
-    unsigned width,
-    unsigned height,
-    unsigned num_samples,
-    glm::mat4 proj_view_inv,
-    std::vector<glm::vec3>& accumulated_colors) {
+void accumulateColors(ExecutionPolicy policy, const Scene& scene, unsigned width, unsigned height, unsigned num_samples, glm::mat4 proj_view_inv, std::vector<glm::vec3>& accumulated_colors) {
     auto rays = generateScreenRays(width, height, proj_view_inv, scene.camera.position);
-    std::transform(policy, rays.begin(), rays.end(), accumulated_colors.begin(), accumulated_colors.begin(), [&](Ray r, glm::vec3 color) {
-        for (unsigned i = 0; i < num_samples; i++) {
-            color += sceneIntersectColor(scene, r);
+    std::transform(
+        policy, rays.begin(), rays.end(), accumulated_colors.begin(), accumulated_colors.begin(),
+        [&](Ray r, glm::vec3 color) {
+            for (unsigned i = 0; i < num_samples; i++) {
+                color += sceneIntersectColor(scene, r);
+            }
+            return color;
         }
-        return color;
-    });
+    );
 }
 
 Uint32 mapRGB(glm::vec3 pixel, const SDL_PixelFormat* pixel_format) {
@@ -67,13 +63,17 @@ Uint32 mapRGB(glm::vec3 pixel, const SDL_PixelFormat* pixel_format) {
     return SDL_MapRGB(pixel_format, upixel.r, upixel.g, upixel.b);
 }
 
-void setSurfacePixels(SDL_Surface* surface, const std::vector<glm::vec3>& pixels) {
+template<typename ExecutionPolicy>
+void setSurfacePixels(ExecutionPolicy policy, SDL_Surface* surface, const std::vector<glm::vec3>& pixels) {
     assert(pixels.size() == surface->w * surface->h);
     Uint32* surface_pixels = static_cast<Uint32*>(surface->pixels);
-    glm::vec3 average = reinhardAverage(pixels);
-    for (unsigned i = 0; i < surface->w * surface->h; i++) {
-        surface_pixels[i] = mapRGB(reinhardToneMap(pixels[i], average), surface->format);
-    }
+    glm::vec3 average = reinhardAverage(policy, pixels);
+    std::transform(
+        policy, pixels.begin(), pixels.end(), surface_pixels,
+        [&](glm::vec3 pixel) {
+            return mapRGB(reinhardToneMap(pixel, average), surface->format);
+        }
+    );
 }
 
 int main() {
@@ -162,12 +162,12 @@ int main() {
         accumulateColors(policy, scene, width, height, num_samples, proj_view_inv, accumulated_colors);
         num_acc_samples += num_samples;
 
-        std::transform(policy, accumulated_colors.begin(), accumulated_colors.end(), pixels.begin(), [=](glm::vec3 accumulated_color) {
+        std::transform(policy, accumulated_colors.begin(), accumulated_colors.end(), pixels.begin(), [&](glm::vec3 accumulated_color) {
             return accumulated_color / float(num_acc_samples);
         });
 
         SDL_Surface* window_surface = SDL_GetWindowSurface(window);
-        setSurfacePixels(window_surface, pixels);
+        setSurfacePixels(policy, window_surface, pixels);
         SDL_UpdateWindowSurface(window);
     }
 
