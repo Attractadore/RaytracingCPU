@@ -16,7 +16,7 @@ add_library(RayTracingLib SHARED
 target_link_libraries(RayTracingLib PUBLIC glm::glm PRIVATE dl)
 
 add_executable(RayTracing "main.cpp")
-target_link_libraries(RayTracing PRIVATE SDL2::SDL2 RayTracingLib tbb)
+target_link_libraries(RayTracing PRIVATE SDL2::SDL2 RayTracingLib TBB::tbb)
 
 add_library(MarbleMaterial SHARED "MarbleMaterial.cpp")
 target_link_libraries(MarbleMaterial PRIVATE RayTracingLib)
