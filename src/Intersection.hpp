@@ -2,7 +2,7 @@
 #include "MaterialInput.hpp"
 
 struct Intersectable;
-struct Material;
+class Material;
 
 struct Intersection {
     MaterialInput input;

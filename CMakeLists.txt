@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 project("Raytracing")
 
-include("cmake/CMakeTemplates/CFlags.cmake")
+include("cmake/CMakeTemplates/PlatformFlags.cmake")
 include("cmake/CMakeTemplates/CXXFlags.cmake")
 
 find_package(SDL2 REQUIRED)
 find_package(glm REQUIRED)
-find_package(TBB REQUIRED)
 
 add_subdirectory("src")

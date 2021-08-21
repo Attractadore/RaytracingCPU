@@ -3,7 +3,15 @@
 
 #include <memory>
 
+template<typename MaterialSubclass>
+Material* getMaterialSubclass() {
+    static_assert(std::is_base_of_v<Material, MaterialSubclass>);
+    static MaterialSubclass material;
+    return &material;
+}
+
 extern "C" {
-using MakeMaterialF = std::unique_ptr<Material> (*)();
-std::unique_ptr<Material> makeMaterial();
+using GetMaterialF = Material*();
+Material* getMaterial();
+static_assert(std::is_same_v<GetMaterialF, decltype(getMaterial)>);
 }

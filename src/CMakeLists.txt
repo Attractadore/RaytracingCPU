@@ -1,43 +1,42 @@
-add_library(RayTracingLib SHARED
-               "Camera.cpp"
-               "Intersection.cpp"
-               "Intersectable.cpp"
-               "Light.cpp"
-               "Material.cpp"
-               "MaterialFactory.cpp"
-               "Ray.cpp"
-               "Scene.cpp"
-               "Transform.cpp"
-               "Util/Lighting.cpp"
-               "Util/Math.cpp"
-               "Util/Color.cpp"
-               "Util/Random.cpp"
+add_subdirectory("Util")
+
+add_library(
+    SceneLib SHARED
+    "Intersectable.cpp" "Intersection.cpp" "Transform.cpp" "Ray.cpp"
+    "Scene.cpp" "Camera.cpp" "Material.cpp" "Light.cpp"
 )
-target_link_libraries(RayTracingLib PUBLIC glm::glm PRIVATE dl)
+target_link_libraries(
+    SceneLib
+    PUBLIC glm::glm
+    PRIVATE UtilLib
+)
+target_include_directories(
+    SceneLib
+    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
-add_executable(RayTracing "main.cpp")
-target_link_libraries(RayTracing PRIVATE SDL2::SDL2 RayTracingLib TBB::tbb)
+add_library(
+    MaterialLoaderLib
+    "MaterialLoader.cpp"
+)
+target_link_libraries(
+    MaterialLoaderLib
+    PRIVATE UtilLib
+)
 
-add_library(MarbleMaterial SHARED "MarbleMaterial.cpp")
-target_link_libraries(MarbleMaterial PRIVATE RayTracingLib)
+find_cxx_parallel_algorithms()
+if (NOT TARGET cxx_parallel_algorithms)
+    message(FATAL_ERROR "C++ parallel algorithms required!")
+endif()
+add_executable(
+    Raytracing
+    "main.cpp"
+)
+target_link_libraries(
+    Raytracing
+    PRIVATE SDL2::SDL2
+            cxx_parallel_algorithms
+            SceneLib MaterialLoaderLib
+)
 
-add_library(BlueMaterial SHARED "BlueMaterial.cpp")
-target_link_libraries(BlueMaterial PRIVATE RayTracingLib)
-
-add_library(GreyMaterial SHARED "GreyMaterial.cpp")
-target_link_libraries(GreyMaterial PRIVATE RayTracingLib)
-
-add_library(GoldMaterial SHARED "GoldMaterial.cpp")
-target_link_libraries(GoldMaterial PRIVATE RayTracingLib)
-
-add_library(MirrorMaterial SHARED "MirrorMaterial.cpp")
-target_link_libraries(MirrorMaterial PRIVATE RayTracingLib)
-
-add_library(GlassMaterial SHARED "GlassMaterial.cpp")
-target_link_libraries(GlassMaterial PRIVATE RayTracingLib)
-
-add_library(RealGlassMaterial SHARED "RealGlassMaterial.cpp")
-target_link_libraries(RealGlassMaterial PRIVATE RayTracingLib)
-
-add_library(LessDenseMaterial SHARED "LessDenseMaterial.cpp")
-target_link_libraries(LessDenseMaterial PRIVATE RayTracingLib)
+add_subdirectory("Materials")
