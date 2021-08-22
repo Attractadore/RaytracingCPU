@@ -3,7 +3,7 @@
 
 #include <memory>
 
-template<typename MaterialSubclass>
+template <typename MaterialSubclass>
 Material* getMaterialSubclass() {
     static_assert(std::is_base_of_v<Material, MaterialSubclass>);
     static MaterialSubclass material;

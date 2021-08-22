@@ -24,7 +24,7 @@ std::string libFilename(const std::string& name, const std::string& path) {
     return path + "/lib" + name + ".so";
 }
 #endif
-}
+}  // namespace
 
 class DynamicLibrary::Impl {
 public:

@@ -13,7 +13,7 @@ constexpr glm::vec3 default_middle_grey{0.5f};
 glm::vec3 srgbToLinear(glm::vec3 color, float gamma = default_gamma);
 glm::vec3 linearToSrgb(glm::vec3 color, float gamma = default_gamma);
 
-template<typename ExecutionPolicy>
+template <typename ExecutionPolicy>
 glm::vec3 reinhardAverage(ExecutionPolicy policy, const std::vector<glm::vec3>& pixels) {
     glm::vec3 sum = std::transform_reduce(
         policy, pixels.begin(), pixels.end(), glm::vec3{0.0f},
@@ -21,8 +21,7 @@ glm::vec3 reinhardAverage(ExecutionPolicy policy, const std::vector<glm::vec3>& 
         [](glm::vec3 p) {
             p = isNaNOrInf(p) ? glm::vec3{0.0f} : p;
             return glm::log2(0.01f + p);
-        }
-    );
+        });
     return glm::max(glm::exp(sum / float(pixels.size())), 0.01f);
 }
 

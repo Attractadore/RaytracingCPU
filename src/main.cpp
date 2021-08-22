@@ -52,8 +52,7 @@ void accumulateColors(ExecutionPolicy policy, const Scene& scene, unsigned width
                 color += sceneIntersectColor(scene, r);
             }
             return color;
-        }
-    );
+        });
 }
 
 Uint32 mapRGB(glm::vec3 pixel, const SDL_PixelFormat* pixel_format) {
@@ -64,7 +63,7 @@ Uint32 mapRGB(glm::vec3 pixel, const SDL_PixelFormat* pixel_format) {
     return SDL_MapRGB(pixel_format, upixel.r, upixel.g, upixel.b);
 }
 
-template<typename ExecutionPolicy>
+template <typename ExecutionPolicy>
 void setSurfacePixels(ExecutionPolicy policy, SDL_Surface* surface, const std::vector<glm::vec3>& pixels) {
     assert(pixels.size() == surface->w * surface->h);
     Uint32* surface_pixels = static_cast<Uint32*>(surface->pixels);
@@ -73,8 +72,7 @@ void setSurfacePixels(ExecutionPolicy policy, SDL_Surface* surface, const std::v
         policy, pixels.begin(), pixels.end(), surface_pixels,
         [&](glm::vec3 pixel) {
             return mapRGB(reinhardToneMap(pixel, average), surface->format);
-        }
-    );
+        });
 }
 
 int main() {

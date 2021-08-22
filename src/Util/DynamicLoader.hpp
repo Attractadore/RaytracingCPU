@@ -12,7 +12,7 @@ public:
     DynamicLibrary& operator=(const DynamicLibrary& other) = delete;
     DynamicLibrary& operator=(DynamicLibrary&& other) noexcept;
 
-    template<typename FunctionOrPtr>
+    template <typename FunctionOrPtr>
     auto getFunction(const std::string& function_name) noexcept {
         using Function = std::remove_pointer_t<FunctionOrPtr>;
         static_assert(std::is_function_v<Function>);
