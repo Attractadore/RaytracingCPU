@@ -38,7 +38,7 @@ struct Plane: Intersectable {
 
 struct MaterialIntersectable {
     Intersectable* object;
-    Material* material;
+    const Material* material;
 
     MaterialIntersection intersect(Ray r) const;
 };

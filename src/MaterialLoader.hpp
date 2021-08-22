@@ -3,4 +3,4 @@
 
 #include <string>
 
-Material* getMaterial(const std::string& name);
+const Material* getMaterial(const std::string& name);

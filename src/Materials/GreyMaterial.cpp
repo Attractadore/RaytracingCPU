@@ -2,6 +2,6 @@
 
 using Grey = SingleColorNonMetallicMCMaterial<glm::vec3{0.5f}, 0.9f, 1.46f>;
 
-Material* getMaterial() {
+const Material* getMaterial() {
     return getMaterialSubclass<Grey>();
 }

@@ -30,6 +30,6 @@ glm::vec3 Marble::getDiffuse(MaterialInput input) const noexcept {
     return glm::mix(diffuse_lf, diffuse_hf, mix_factor);
 }
 
-Material* getMaterial() {
+const Material* getMaterial() {
     return getMaterialSubclass<Marble>();
 }

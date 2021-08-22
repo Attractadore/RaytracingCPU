@@ -3,7 +3,7 @@
 
 #include <unordered_map>
 
-Material* getMaterial(const std::string& name) {
+const Material* getMaterial(const std::string& name) {
     static std::unordered_map<std::string, DynamicLibrary> materials;
     auto kv = materials.find(name);
     if (kv == materials.end()) {

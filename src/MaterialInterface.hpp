@@ -4,14 +4,13 @@
 #include <memory>
 
 template <typename MaterialSubclass>
-Material* getMaterialSubclass() {
+const Material* getMaterialSubclass() {
     static_assert(std::is_base_of_v<Material, MaterialSubclass>);
     static MaterialSubclass material;
     return &material;
 }
 
 extern "C" {
-using GetMaterialF = Material*();
-Material* getMaterial();
-static_assert(std::is_same_v<GetMaterialF, decltype(getMaterial)>);
+const Material* getMaterial();
+using GetMaterialF = decltype(getMaterial);
 }
