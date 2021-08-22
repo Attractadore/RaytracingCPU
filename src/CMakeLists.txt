@@ -7,8 +7,7 @@ add_library(
 )
 target_link_libraries(
     SceneLib
-    PUBLIC glm::glm
-    PRIVATE UtilLib
+    PUBLIC UtilLib
 )
 target_include_directories(
     SceneLib

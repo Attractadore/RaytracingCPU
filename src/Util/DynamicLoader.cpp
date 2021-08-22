@@ -4,14 +4,26 @@
 
 #if BOOST_OS_WINDOWS
 #include <Windows.h>
-#elif BOOST_OS_LINUX
+#elif BOOST_OS_MACOS || BOOST_OS_LINUX
 #include <dlfcn.h>
 #else
 #error Unknown platform
 #endif
 
 namespace {
-std::string libFilename(const std::string& name, const std::string& path);
+#if BOOST_OS_WINDOWS
+std::string libFilename(const std::string& name, const std::string& path) {
+    return path + "/" + name + ".dll";
+}
+#elif BOOST_OS_MACOS
+std::string libFilename(const std::string& name, const std::string& path) {
+    return path + "/lib" + name + ".dylib";
+}
+#elif BOOST_OS_LINUX
+std::string libFilename(const std::string& name, const std::string& path) {
+    return path + "/lib" + name + ".so";
+}
+#endif
 }
 
 class DynamicLibrary::Impl {
@@ -30,18 +42,12 @@ public:
 private:
 #if BOOST_OS_WINDOWS
     HMODULE handle;
-#elif BOOST_OS_LINUX
+#elif BOOST_OS_MACOS || BOOST_OS_LINUX
     void* handle;
 #endif
 };
 
 #if BOOST_OS_WINDOWS
-namespace {
-std::string libFilename(const std::string& name, const std::string& path) {
-    return path + "/" + name + ".dll";
-}
-}
-
 DynamicLibrary::Impl::Impl(const std::string& name, const std::string& path) {
     handle = LoadLibraryA(libFilename(name, path).c_str());
 }
@@ -68,13 +74,7 @@ DynamicLibrary::Impl::operator bool() const noexcept {
 void* DynamicLibrary::Impl::getFunction(const std::string& function_name) noexcept {
     return handle ? GetProcAddress(handle, function_name.c_str()) : nullptr;
 }
-#elif BOOST_OS_LINUX
-namespace {
-std::string libFilename(const std::string& name, const std::string& path) {
-    return path + "/lib" + name + ".so";
-}
-}
-
+#elif BOOST_OS_MACOS || BOOST_OS_LINUX
 DynamicLibrary::Impl::Impl(const std::string& name, const std::string& path) {
     handle = dlopen(libFilename(name, path).c_str(), RTLD_NOW);
 }
