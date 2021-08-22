@@ -84,7 +84,7 @@ int main() {
 
     int width = 1280;
     int height = 720;
-    SDL_Window* window = SDL_CreateWindow("RayTracing", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
+    SDL_Window* window = SDL_CreateWindow("Default scene", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
 
     auto blue = getMaterial("BlueMaterial");
     auto marble = getMaterial("MarbleMaterial");
