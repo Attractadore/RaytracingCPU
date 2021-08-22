@@ -8,10 +8,12 @@
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
+#include <boost/program_options.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <execution>
+#include <iostream>
 #include <random>
 
 glm::mat4 generatePixelstoNDC(unsigned width, unsigned height) {
@@ -75,13 +77,32 @@ void setSurfacePixels(ExecutionPolicy policy, SDL_Surface* surface, const std::v
         });
 }
 
-int main() {
+int main(int argc, const char* argv[]) {
+    namespace po = boost::program_options;
+
+    int width = 1280;
+    int height = 720;
+
+    po::options_description options;
+    options.add_options()("help", "show this message")(
+        "width,w", po::value(&width)->default_value(width),
+        "set window width")("height,h", po::value(&height)->default_value(height),
+                            "set window height");
+
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, options), vm);
+    po::notify(vm);
+
+    if (vm.contains("help")) {
+      std::cout << "Usage: " << argv[0] << " [options]:\n";
+      std::cout << options << "\n";
+      return 0;
+    }
+
     SDL_SetMainReady();
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
     SDL_Init(SDL_INIT_EVERYTHING);
 
-    int width = 1280;
-    int height = 720;
     SDL_Window* window = SDL_CreateWindow("Default scene", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
 
     auto blue = getMaterial("BlueMaterial");
