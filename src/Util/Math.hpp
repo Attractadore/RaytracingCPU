@@ -1,14 +1,19 @@
 #pragma once
 #include <glm/common.hpp>
 
-float linearRemap(float left, float right, float new_left, float new_right, float x);
+inline float linearRemap(float left, float right, float new_left, float new_right, float x) {
+    float t = (x - left) / (right - left);
+    return glm::mix(new_left, new_right, t);
+}
 
 template <typename T>
 bool inInterval(T left, T right, T x) {
     return left < x and x < right;
 }
 
-bool isNaNOrInf(float x);
+inline bool isNaNOrInf(float x) {
+    return glm::isnan(x) || glm::isinf(x);
+}
 
 template <typename VecType>
 bool isNaNOrInf(VecType x) {

@@ -1,18 +1,14 @@
 #include "Intersectable.hpp"
 #include "Light.hpp"
-#include "Material.hpp"
 #include "MaterialLoader.hpp"
 #include "Scene.hpp"
-#include "Util/Color.hpp"
-#include "Util/Math.hpp"
+#include "Util/ReinhardToneMapping.hpp"
+#include "Util/Window.hpp"
 
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
 #include <boost/program_options.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <execution>
 #include <iostream>
 #include <random>
 
@@ -44,8 +40,8 @@ std::vector<Ray> generateScreenRays(unsigned width, unsigned height, glm::mat4 u
     return rays;
 }
 
-template <typename ExecutionPolicy>
-void accumulateColors(ExecutionPolicy policy, const Scene& scene, unsigned width, unsigned height, unsigned num_samples, glm::mat4 proj_view_inv, std::vector<glm::vec3>& accumulated_colors) {
+template <ExecutionPolicy P>
+void accumulateColors(P policy, const Scene& scene, unsigned width, unsigned height, unsigned num_samples, glm::mat4 proj_view_inv, std::vector<glm::vec3>& accumulated_colors) {
     auto rays = generateScreenRays(width, height, proj_view_inv, scene.camera.position);
     std::transform(
         policy, rays.begin(), rays.end(), accumulated_colors.begin(), accumulated_colors.begin(),
@@ -57,60 +53,88 @@ void accumulateColors(ExecutionPolicy policy, const Scene& scene, unsigned width
         });
 }
 
-Uint32 mapRGB(glm::vec3 pixel, const SDL_PixelFormat* pixel_format) {
-    pixel = linearToSrgb(pixel);
-    pixel = glm::clamp(pixel, 0.0f, 1.0f);
-    glm::uvec3 upixel = float(std::numeric_limits<Uint8>::max()) * pixel;
-    pixel = {0.0f, 0.0f, 1.0f};
-    return SDL_MapRGB(pixel_format, upixel.r, upixel.g, upixel.b);
+glm::mat4 getProjViewInv(const Window& window, const Scene& scene) {
+    glm::mat4 proj = windowPerspective(window, scene.eps);
+    glm::mat4 view = cameraView(scene.camera);
+    return glm::inverse(proj * view);
 }
 
-template <typename ExecutionPolicy>
-void setSurfacePixels(ExecutionPolicy policy, SDL_Surface* surface, const std::vector<glm::vec3>& pixels) {
-    assert(pixels.size() == surface->w * surface->h);
-    Uint32* surface_pixels = static_cast<Uint32*>(surface->pixels);
-    glm::vec3 average = reinhardAverage(policy, pixels);
-    std::transform(
-        policy, pixels.begin(), pixels.end(), surface_pixels,
-        [&](glm::vec3 pixel) {
-            return mapRGB(reinhardToneMap(pixel, average), surface->format);
-        });
+template <ExecutionPolicy P>
+auto runBenchmark(P policy, const Window& window, const Scene& scene) {
+    auto [width, height] = window.dimensions();
+    glm::mat4 proj_view_inv = getProjViewInv(window, scene);
+    std::vector<glm::vec3> colors{width * height};
+
+    auto start = std::chrono::steady_clock::now();
+    accumulateColors(policy, scene, width, height, window.samples, proj_view_inv, colors);
+    auto end = std::chrono::steady_clock::now();
+
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+}
+
+template <ExecutionPolicy P>
+void renderFrame(P policy, Window& window, const Scene& scene, std::vector<glm::vec3>& accumulated_colors, unsigned& accumulated_samples) {
+    auto [width, height] = window.dimensions();
+    glm::mat4 proj_view_inv = getProjViewInv(window, scene);
+
+    accumulateColors(policy, scene, width, height, window.samples, proj_view_inv, accumulated_colors);
+    accumulated_samples += window.samples;
+    auto pixels = std::views::transform(
+        accumulated_colors,
+        [&](glm::vec3 pixel) { return pixel / float(accumulated_samples); });
+    auto tone_mapped_pixels = reinhardToneMapPixels(policy, pixels.begin(), pixels.end());
+    window.setPixels(tone_mapped_pixels.begin(), tone_mapped_pixels.end());
+    window.update();
+}
+
+template <ExecutionPolicy P>
+void runRender(P policy, Window& window, const Scene& scene) {
+    auto [width, height] = window.dimensions();
+    std::vector<glm::vec3> accumulated_colors{width * height, glm::vec3{0.0f}};
+    unsigned accumulated_samples = 0;
+
+    while (!window.shouldClose()) {
+        renderFrame(policy, window, scene, accumulated_colors, accumulated_samples);
+    }
 }
 
 int main(int argc, const char* argv[]) {
-    namespace po = boost::program_options;
+    namespace bpo = boost::program_options;
 
-    int width = 1280;
-    int height = 720;
+    unsigned width = 1280;
+    unsigned height = 720;
+    unsigned pixel_samples = 16;
+    std::string scene_name = "Default";
 
-    po::options_description options;
-    options.add_options()("help", "show this message")(
-        "width,w", po::value(&width)->default_value(width),
-        "set window width")("height,h", po::value(&height)->default_value(height),
-                            "set window height");
+    bpo::options_description options;
+    // clang-format off
+    options.add_options()
+        ("help", "show this message")
+        ("benchmark", "render a single frame and measure the time it takes")
+        ("width,w", bpo::value(&width), "set window width")
+        ("height,h", bpo::value(&height), "set window height")
+        ("samples,s", bpo::value(&pixel_samples), "the number of samples per pixel")
+    ;
+    // clang-format on
 
-    po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, options), vm);
-    po::notify(vm);
+    bpo::variables_map vm;
+    bpo::store(bpo::parse_command_line(argc, argv, options), vm);
+    bpo::notify(vm);
 
     if (vm.contains("help")) {
-      std::cout << "Usage: " << argv[0] << " [options]:\n";
-      std::cout << options << "\n";
-      return 0;
+        std::cout << "Usage: " << argv[0] << " [options]:\n";
+        std::cout << options << "\n";
+        return 0;
     }
 
-    SDL_SetMainReady();
-    SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-    SDL_Init(SDL_INIT_EVERYTHING);
-
-    SDL_Window* window = SDL_CreateWindow("Default scene", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
+    bool benchmark = vm.contains("benchmark");
 
     auto blue = getMaterial("BlueMaterial");
     auto marble = getMaterial("MarbleMaterial");
     auto grey = getMaterial("GreyMaterial");
     auto gold = getMaterial("GoldMaterial");
 
-    Sphere marble_sphere{glm::translate(glm::mat4(1.0f), {0.0f, 0.0f, 1.0f})};
+    Sphere marble_sphere = {glm::translate(glm::mat4(1.0f), {0.0f, 0.0f, 1.0f})};
     MaterialIntersectable marble_material_sphere{
         .object = &marble_sphere,
         .material = marble,
@@ -149,41 +173,20 @@ int main(int argc, const char* argv[]) {
         .eps = 0.001f,
     };
 
-    glm::mat4 view = cameraView(scene.camera);
+    Window window(width, height);
+    window.samples = pixel_samples;
+    window.hfov = 45.0f;
+    window.setTitle(scene_name);
 
-    float hfov = 45.0f;
-    float aspect = float(width) / float(height);
-    glm::mat4 proj = glm::infinitePerspective(glm::radians(hfov), aspect, scene.eps);
-
-    glm::mat4 proj_view_inv = glm::inverse(proj * view);
-
-    unsigned num_acc_samples = 0;
-    unsigned num_samples = 16;
-    std::vector<glm::vec3> accumulated_colors(width * height, glm::vec3{0.0f});
-    std::vector<glm::vec3> pixels(width * height);
     auto policy = std::execution::par_unseq;
 
-    bool exit = false;
-    while (!exit) {
-        SDL_Event e;
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE) {
-                exit = true;
-            }
-        }
-
-        accumulateColors(policy, scene, width, height, num_samples, proj_view_inv, accumulated_colors);
-        num_acc_samples += num_samples;
-
-        std::transform(policy, accumulated_colors.begin(), accumulated_colors.end(), pixels.begin(), [&](glm::vec3 accumulated_color) {
-            return accumulated_color / float(num_acc_samples);
-        });
-
-        SDL_Surface* window_surface = SDL_GetWindowSurface(window);
-        setSurfacePixels(policy, window_surface, pixels);
-        SDL_UpdateWindowSurface(window);
+    if (benchmark) {
+        window.hide();
+        auto render_time = runBenchmark(policy, window, scene);
+        std::cout << "Rendered scene \"" << scene_name << "\" "
+                  << "(" << width << "x" << height << ", " << pixel_samples << " samples) "
+                  << "in " << render_time << " milliseconds\n";
+    } else {
+        runRender(policy, window, scene);
     }
-
-    SDL_DestroyWindow(window);
-    SDL_Quit();
 }

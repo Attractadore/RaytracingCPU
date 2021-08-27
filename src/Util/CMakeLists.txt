@@ -1,8 +1,3 @@
-find_package(Boost COMPONENTS headers REQUIRED)
-find_platform_dynamic_linker()
-if (NOT TARGET platform_dynamic_linker)
-    message(FATAL_ERROR "Dynamic linker required!")
-endif()
 add_library(
     DynamicLoaderLib
     "DynamicLoader.cpp"
@@ -14,11 +9,40 @@ target_link_libraries(
 )
 
 add_library(
+    ReinhardToneMapping INTERFACE
+    "ReinhardToneMapping.hpp"
+)
+target_link_libraries(
+    ReinhardToneMapping
+    INTERFACE cxx_parallel_algorithms
+)
+
+add_library(
+    SDLHandleLib
+    "SDLHandle.cpp"
+)
+target_link_libraries(
+    SDLHandleLib
+    PUBLIC SDL2::SDL2
+)
+
+add_library(
+    WindowLib
+    "Window.cpp"
+)
+target_link_libraries(
+    WindowLib
+    PUBLIC glm::glm
+    PRIVATE SDLHandleLib
+)
+
+add_library(
     UtilLib SHARED
-    "Lighting.cpp" "Math.cpp" "Color.cpp" "Random.cpp"
+    "Lighting.cpp" "Math.hpp" "Random.cpp"
 )
 target_link_libraries(
     UtilLib
     PUBLIC glm::glm
            DynamicLoaderLib
+           WindowLib
 )
