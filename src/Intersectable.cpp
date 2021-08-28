@@ -1,34 +1,31 @@
 #include "Intersectable.hpp"
-#include "Util/Math.hpp"
 
 #include <glm/gtc/constants.hpp>
 #include <glm/trigonometric.hpp>
 
-static MaterialInput sphereIntersection(Sphere s, glm::vec3 position) {
+namespace {
+MeshIntersection sphereIntersection(glm::vec3 position, float t) {
     float u = glm::atan(position.y, position.x) / glm::pi<float>();
     float v = glm::asin(position.z) / glm::half_pi<float>();
     return {
-        .position = s.trans.model * glm::vec4{position, 1.0f},
-        .normal = glm::normalize(s.trans.normal * position),
+        .position{position},
+        .normal{position},
         .uv{u, v},
+        .t{t},
     };
 }
 
-bool Sphere::hasIntersection(Ray r) const {
-    return bool{intersect(r)};
+MeshIntersection planeIntersection(glm::vec3 position, float t) {
+    return {
+        .position{position},
+        .normal{0.0f, 0.0f, 1.0f},
+        .uv{position.x, position.y},
+        .t{t},
+    };
 }
+}  // namespace
 
-float Sphere::intersectDistance(Ray r) const {
-    auto intersection = intersect(r);
-    if (intersection) {
-        return intersection.t;
-    }
-    return false;
-}
-
-Intersection Sphere::intersect(Ray r) const {
-    r = rayTransform(r, trans.model_inv);
-
+MeshIntersection Sphere::intersect(Ray r) const {
     // r.origin + t * r.direction = 1
     // r.origin ** 2 + 2 * t * r.origin * r.direction + t ** 2 * r.direction ** 2 = 1
     float a = glm::dot(r.direction, r.direction);
@@ -39,73 +36,40 @@ Intersection Sphere::intersect(Ray r) const {
 
     if (D > 0.0f) {
         float sD = glm::sqrt(D);
-        {
-            float n = -b - sD;
-            if (n > 0.0f) {
-                Intersection intersection{
-                    sphereIntersection(*this, rayAdvance(r, n)),
-                    n};
-                intersection.input.object = this;
-                intersection.input.incident = rayTransform(r, trans.model).direction;
-                intersection.input.bounces = r.bounces;
-                return intersection;
-            }
+        float n = -b - sD;
+        if (n > 0.0f) {
+            return sphereIntersection(rayAdvance(r, n), n);
         }
-        {
-            float f = -b + sD;
-            if (f > 0.0f) {
-                Intersection intersection{
-                    sphereIntersection(*this, rayAdvance(r, f)),
-                    f};
-                intersection.input.object = this;
-                intersection.input.incident = rayTransform(r, trans.model).direction;
-                intersection.input.bounces = r.bounces;
-                return intersection;
-            }
+        float f = -b + sD;
+        if (f > 0.0f) {
+            return sphereIntersection(rayAdvance(r, f), f);
         }
     }
-
-    return {};
+    return {.t{false}};
 }
 
-static MaterialInput planeIntersection(Plane p, glm::vec3 position) {
-    return {
-        .position = p.trans.model * glm::vec4{position, 1.0f},
-        .normal = glm::normalize(p.trans.normal[2]),
-    };
-}
-
-bool Plane::hasIntersection(Ray r) const {
-    return bool{intersect(r)};
-}
-
-float Plane::intersectDistance(Ray r) const {
-    auto intersection = intersect(r);
-    if (intersection) {
-        return intersection.t;
-    }
-    return false;
-}
-
-Intersection Plane::intersect(Ray r) const {
-    r = rayTransform(r, trans.model_inv);
-
+MeshIntersection Plane::intersect(Ray r) const {
     // (r.origin + t * r.direction) * (0, 0, 1) = 0
     float t = -r.origin.z / r.direction.z;
 
     if (t > 0.0f) {
-        Intersection intersection{
-            planeIntersection(*this, rayAdvance(r, t)),
-            t};
-        intersection.input.object = this;
-        intersection.input.incident = rayTransform(r, trans.model).direction;
-        intersection.input.bounces = r.bounces;
-        return intersection;
+        return planeIntersection(rayAdvance(r, t), t);
     }
 
-    return {};
+    return {.t{false}};
 }
 
-MaterialIntersection MaterialIntersectable::intersect(Ray r) const {
-    return MaterialIntersection{material, object->intersect(r)};
+bool Model::hasIntersection(Ray r, float eps) const {
+    r = rayTransform(r, t.model_inv);
+    return mesh->hasIntersection(r, eps);
+}
+
+float Model::intersectDistance(Ray r) const {
+    r = rayTransform(r, t.model_inv);
+    return mesh->intersectDistance(r);
+}
+
+ModelIntersection Model::intersect(Ray r) const {
+    r = rayTransform(r, t.model_inv);
+    return ModelIntersection{this, mesh->intersect(r)};
 }

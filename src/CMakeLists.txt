@@ -23,16 +23,25 @@ target_link_libraries(
     PRIVATE UtilLib
 )
 
+add_library(
+    SceneLoaderLib
+    "SceneLoader.cpp"
+)
+target_link_libraries(
+    SceneLoaderLib
+    PUBLIC SceneLib
+    PRIVATE MaterialLoaderLib
+)
+
 add_executable(
     Raytracing
     "main.cpp"
 )
 target_link_libraries(
     Raytracing
-    PRIVATE Boost::program_options
+    PRIVATE SceneLoaderLib
+            Boost::program_options
             cxx_parallel_algorithms
-            SceneLib
-            MaterialLoaderLib
 )
 
 add_subdirectory("Materials")

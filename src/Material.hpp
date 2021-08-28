@@ -13,7 +13,7 @@ public:
 protected:
     virtual glm::vec3 getPosition(MaterialInput input) const noexcept { return input.position; }
     virtual glm::vec3 getNormal(MaterialInput input) const noexcept { return input.normal; }
-    virtual glm::vec3 getView(MaterialInput input) const noexcept { return -input.incident; }
+    virtual glm::vec3 getView(MaterialInput input) const noexcept { return input.view; }
 };
 
 class BlinnPhongMaterial: public Material {

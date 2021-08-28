@@ -1,32 +1,31 @@
 #pragma once
-#include "MaterialInput.hpp"
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
-struct Intersectable;
-class Material;
+struct Model;
 
-struct Intersection {
-    MaterialInput input;
+struct MeshIntersection {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 uv;
     float t;
 
-    Intersection();
-    Intersection(MaterialInput i, float d):
-        input{i}, t{d} {}
-
-    explicit operator bool() const {
-        return input.object;
+    explicit operator bool() const noexcept {
+        return bool(t);
     }
 };
 
-struct MaterialIntersection {
-    const Material* material;
-    MaterialInput input;
+struct ModelIntersection {
+    const Model* model;
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 uv;
     float t;
 
-    MaterialIntersection();
-    MaterialIntersection(const Material* m, Intersection is):
-        material{m}, input{is.input}, t{is.t} {}
+    ModelIntersection() noexcept;
+    ModelIntersection(const Model* m, MeshIntersection is) noexcept;
 
     explicit operator bool() const {
-        return material && input.object;
+        return model;
     }
 };

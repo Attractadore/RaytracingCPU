@@ -1,7 +1,7 @@
 #include "Intersectable.hpp"
 #include "Light.hpp"
 #include "MaterialLoader.hpp"
-#include "Scene.hpp"
+#include "SceneLoader.hpp"
 #include "Util/ReinhardToneMapping.hpp"
 #include "Util/Window.hpp"
 
@@ -129,64 +129,22 @@ int main(int argc, const char* argv[]) {
 
     bool benchmark = vm.contains("benchmark");
 
-    auto blue = getMaterial("BlueMaterial");
-    auto marble = getMaterial("MarbleMaterial");
-    auto grey = getMaterial("GreyMaterial");
-    auto gold = getMaterial("GoldMaterial");
-
-    Sphere marble_sphere = {glm::translate(glm::mat4(1.0f), {0.0f, 0.0f, 1.0f})};
-    MaterialIntersectable marble_material_sphere{
-        .object = &marble_sphere,
-        .material = marble,
-    };
-
-    Sphere gold_sphere{glm::translate(glm::mat4(1.0f), {-3.0f, 2.0f, 1.0f})};
-    MaterialIntersectable gold_material_sphere{
-        .object = &gold_sphere,
-        .material = gold,
-    };
-
-    Sphere blue_sphere{glm::translate(glm::mat4(1.0f), {-2.0f, -3.0f, 1.0f})};
-    MaterialIntersectable blue_material_sphere{
-        .object = &blue_sphere,
-        .material = blue,
-    };
-
-    Plane grey_plane{};
-
-    MaterialIntersectable grey_material_plane{
-        .object = &grey_plane,
-        .material = grey,
-    };
-
-    DirectionalLight sun{glm::vec3{10.0f, 10.0f, 9.0f},
-                         glm::normalize(glm::vec3{0.0f, -1.0f, -1.0f})};
-
-    Scene scene = {
-        .objects = {&marble_material_sphere, &gold_material_sphere, &blue_material_sphere, &grey_material_plane},
-        .lights = {&sun},
-        .camera = {
-            .position{-10.0f, 0.0f, 5.0f},
-            .direction = glm::normalize(glm::vec3{10.0f, 0.0f, -5.0f}),
-            .up{0.0f, 0.0f, 1.0f},
-        },
-        .eps = 0.001f,
-    };
+    NamedScene scene = loadScene("");
 
     Window window(width, height);
     window.samples = pixel_samples;
     window.hfov = 45.0f;
-    window.setTitle(scene_name);
+    window.setTitle(scene.name);
 
     auto policy = std::execution::par_unseq;
 
     if (benchmark) {
         window.hide();
-        auto render_time = runBenchmark(policy, window, scene);
-        std::cout << "Rendered scene \"" << scene_name << "\" "
+        auto render_time = runBenchmark(policy, window, scene.scene);
+        std::cout << "Rendered scene \"" << scene.name << "\" "
                   << "(" << width << "x" << height << ", " << pixel_samples << " samples) "
                   << "in " << render_time << " milliseconds\n";
     } else {
-        runRender(policy, window, scene);
+        runRender(policy, window, scene.scene);
     }
 }

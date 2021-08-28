@@ -3,42 +3,33 @@
 #include "Ray.hpp"
 #include "Transform.hpp"
 
-struct Intersectable {
-    Transform trans;
+class Material;
 
-    Intersectable(glm::mat4 model):
-        trans{model} {}
-
-    virtual bool hasIntersection(Ray r) const = 0;
-    virtual float intersectDistance(Ray r) const = 0;
-    virtual Intersection intersect(Ray r) const = 0;
+struct Mesh {
+    virtual bool hasIntersection(Ray r, float eps) const {
+        float t = intersectDistance(r);
+        return bool(t) and t > eps;
+    }
+    virtual float intersectDistance(Ray r) const {
+        return intersect(r).t;
+    }
+    virtual MeshIntersection intersect(Ray r) const = 0;
 };
 
-struct Sphere: public Intersectable {
-    Sphere():
-        Sphere{glm::mat4{1.0f}} {}
-    Sphere(glm::mat4 model):
-        Intersectable{model} {}
-
-    virtual bool hasIntersection(Ray r) const override;
-    virtual float intersectDistance(Ray r) const override;
-    virtual Intersection intersect(Ray r) const override;
+struct Sphere: public Mesh {
+    virtual MeshIntersection intersect(Ray r) const override;
 };
 
-struct Plane: Intersectable {
-    Plane():
-        Plane{glm::mat4{1.0f}} {}
-    Plane(glm::mat4 model):
-        Intersectable{model} {}
-
-    virtual bool hasIntersection(Ray r) const override;
-    virtual float intersectDistance(Ray r) const override;
-    virtual Intersection intersect(Ray r) const override;
+struct Plane: public Mesh {
+    virtual MeshIntersection intersect(Ray r) const override;
 };
 
-struct MaterialIntersectable {
-    Intersectable* object;
+struct Model {
+    const Mesh* mesh;
     const Material* material;
+    Transform t;
 
-    MaterialIntersection intersect(Ray r) const;
+    bool hasIntersection(Ray r, float eps) const;
+    float intersectDistance(Ray r) const;
+    ModelIntersection intersect(Ray r) const;
 };

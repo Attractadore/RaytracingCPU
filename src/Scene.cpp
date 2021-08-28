@@ -3,52 +3,43 @@
 #include "Material.hpp"
 #include "Util/Math.hpp"
 
-#include <cmath>
+#include <algorithm>
 
 bool sceneHasIntersection(const Scene& scene, Ray r) {
-    for (auto mo: scene.objects) {
-        float t = mo->object->intersectDistance(r);
-        assert(std::isfinite(t));
-        if (t > scene.eps) {
-            return true;
+    return std::find_if(
+        scene.models.begin(), scene.models.end(),
+        [&](const Model& model) {
+            return model.hasIntersection(r, scene.eps);
         }
-    }
-
-    return false;
+    ) != scene.models.end();
 }
 
-Intersection sceneIntersect(const Scene& scene, Ray r) {
-    Intersection nearest_intersection;
-
-    for (auto mo: scene.objects) {
-        auto intersection = mo->object->intersect(r);
-        if (intersection && inInterval(scene.eps, nearest_intersection.t, intersection.t)) {
+ModelIntersection sceneIntersect(const Scene& scene, Ray r) {
+    ModelIntersection nearest_intersection;
+    for (const auto& model: scene.models) {
+        auto intersection = model.intersect(r);
+        if (intersection and inInterval(scene.eps, nearest_intersection.t, intersection.t)) {
             nearest_intersection = intersection;
         }
     }
-
-    return nearest_intersection;
-}
-
-MaterialIntersection sceneIntersectMaterial(const Scene& scene, Ray r) {
-    MaterialIntersection nearest_intersection;
-
-    for (auto mo: scene.objects) {
-        auto intersection = mo->intersect(r);
-        if (intersection && inInterval(scene.eps, nearest_intersection.t, intersection.t)) {
-            nearest_intersection = intersection;
-        }
-    }
-
     return nearest_intersection;
 }
 
 glm::vec3 sceneIntersectColor(const Scene& scene, Ray r) {
-    auto intersection = sceneIntersectMaterial(scene, r);
+    auto intersection = sceneIntersect(scene, r);
 
     if (!intersection) {
         return glm::vec3{0.0f};
     }
 
-    return intersection.material->evaluate(intersection.input, scene);
+    MaterialInput input = {
+        .model = intersection.model,
+        .view = -r.direction,
+        .position = intersection.position,
+        .normal = intersection.normal,
+        .uv = intersection.uv,
+        .bounces = r.bounces,
+    };
+
+    return intersection.model->material->evaluate(input, scene);
 }

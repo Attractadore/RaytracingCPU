@@ -15,8 +15,8 @@ glm::vec3 BlinnPhongMaterial::evaluate(MaterialInput input, const Scene& scene) 
 
 glm::vec3 BlinnPhongMaterial::evaluate(MaterialInput, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, glm::vec3 specular, float specular_hardness) const noexcept {
     glm::vec3 color{0.0f};
-    for (auto light: scene.lights) {
-        color += evaluate(scene, position, normal, view, diffuse, specular, specular_hardness, light);
+    for (const auto& light: scene.lights) {
+        color += evaluate(scene, position, normal, view, diffuse, specular, specular_hardness, light.get());
     }
     return color;
 }
@@ -42,8 +42,8 @@ glm::vec3 CookTorranceMaterial::evaluate(MaterialInput input, const Scene& scene
 
 glm::vec3 CookTorranceMaterial::evaluate(MaterialInput, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const noexcept {
     glm::vec3 color{0.0f};
-    for (auto light: scene.lights) {
-        color += evaluate(scene, position, normal, view, diffuse, roughness, metallic, eta, light);
+    for (const auto& light: scene.lights) {
+        color += evaluate(scene, position, normal, view, diffuse, roughness, metallic, eta, light.get());
     }
     return color;
 }
