@@ -8,10 +8,10 @@ template <
     float eta>
 struct SingleColorCTMaterial: public virtual CookTorranceMaterial {
 protected:
-    glm::vec3 getDiffuse(MaterialInput) const noexcept override { return diffuse; }
-    float getRoughness(MaterialInput) const noexcept override { return roughness; }
-    float getMetallic(MaterialInput) const noexcept override { return metallic; }
-    float getEta(MaterialInput) const noexcept override { return eta; }
+    glm::vec3 getDiffuse(const MaterialInput&) const noexcept override { return diffuse; }
+    float getRoughness(const MaterialInput&) const noexcept override { return roughness; }
+    float getMetallic(const MaterialInput&) const noexcept override { return metallic; }
+    float getEta(const MaterialInput&) const noexcept override { return eta; }
 };
 
 template <

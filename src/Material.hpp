@@ -8,42 +8,42 @@ struct Light;
 
 class Material {
 public:
-    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene) const = 0;
+    virtual glm::vec3 evaluate(const MaterialInput& input, const Scene& scene) const = 0;
 
 protected:
-    virtual glm::vec3 getPosition(MaterialInput input) const noexcept { return input.position; }
-    virtual glm::vec3 getNormal(MaterialInput input) const noexcept { return input.normal; }
-    virtual glm::vec3 getView(MaterialInput input) const noexcept { return input.view; }
+    virtual glm::vec3 getPosition(const MaterialInput& input) const noexcept { return input.position; }
+    virtual glm::vec3 getNormal(const MaterialInput& input) const noexcept { return input.normal; }
+    virtual glm::vec3 getView(const MaterialInput& input) const noexcept { return input.view; }
 };
 
 class BlinnPhongMaterial: public Material {
 public:
-    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene) const override;
+    virtual glm::vec3 evaluate(const MaterialInput& input, const Scene& scene) const override;
 
 protected:
-    virtual glm::vec3 getDiffuse(MaterialInput input) const noexcept = 0;
-    virtual glm::vec3 getSpecular(MaterialInput input) const noexcept = 0;
-    virtual float getSpecularHardness(MaterialInput input) const noexcept = 0;
+    virtual glm::vec3 getDiffuse(const MaterialInput& input) const noexcept = 0;
+    virtual glm::vec3 getSpecular(const MaterialInput& input) const noexcept = 0;
+    virtual float getSpecularHardness(const MaterialInput& input) const noexcept = 0;
 
-    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, glm::vec3 specular, float specular_hardness) const noexcept;
+    virtual glm::vec3 evaluate(const MaterialInput& input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, glm::vec3 specular, float specular_hardness) const noexcept;
     virtual glm::vec3 evaluate(const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, glm::vec3 specular, float specular_hardness, const Light* light) const noexcept;
 };
 
 class CookTorranceMaterial: public Material {
 public:
-    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene) const override;
+    virtual glm::vec3 evaluate(const MaterialInput& input, const Scene& scene) const override;
 
 protected:
-    virtual glm::vec3 getDiffuse(MaterialInput input) const noexcept = 0;
-    virtual float getRoughness(MaterialInput input) const noexcept = 0;
-    virtual float getMetallic(MaterialInput input) const noexcept = 0;
-    virtual float getEta(MaterialInput input) const noexcept = 0;
+    virtual glm::vec3 getDiffuse(const MaterialInput& input) const noexcept = 0;
+    virtual float getRoughness(const MaterialInput& input) const noexcept = 0;
+    virtual float getMetallic(const MaterialInput& input) const noexcept = 0;
+    virtual float getEta(const MaterialInput& input) const noexcept = 0;
 
-    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const noexcept;
+    virtual glm::vec3 evaluate(const MaterialInput& input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const noexcept;
     virtual glm::vec3 evaluate(const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta, const Light* light) const noexcept;
 };
 
 class MonteCarloCookTorranceMaterial: public virtual CookTorranceMaterial {
 protected:
-    virtual glm::vec3 evaluate(MaterialInput input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const noexcept override;
+    virtual glm::vec3 evaluate(const MaterialInput& input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const noexcept override;
 };
