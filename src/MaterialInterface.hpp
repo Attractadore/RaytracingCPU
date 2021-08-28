@@ -1,11 +1,9 @@
 #pragma once
 #include "Material.hpp"
 
-#include <memory>
-
 template <typename MaterialSubclass>
+    requires std::is_base_of_v<Material, MaterialSubclass>
 const Material* getMaterialSubclass() {
-    static_assert(std::is_base_of_v<Material, MaterialSubclass>);
     static MaterialSubclass material;
     return &material;
 }
