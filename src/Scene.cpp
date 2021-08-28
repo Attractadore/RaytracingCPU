@@ -3,26 +3,24 @@
 #include "Material.hpp"
 #include "Util/Math.hpp"
 
-#include <algorithm>
-
 bool sceneHasIntersection(const Scene& scene, Ray r) {
-    return std::find_if(
-        scene.models.begin(), scene.models.end(),
-        [&](const Model& model) {
-            return model.hasIntersection(r, scene.eps);
+    for (const auto& model: scene.models) {
+        if (model.hasIntersection(r, scene.eps)) {
+            return true;
         }
-    ) != scene.models.end();
+    }
+    return false;
 }
 
 ModelIntersection sceneIntersect(const Scene& scene, Ray r) {
-    ModelIntersection nearest_intersection;
+    ModelIntersection nearest;
     for (const auto& model: scene.models) {
         auto intersection = model.intersect(r);
-        if (intersection and inInterval(scene.eps, nearest_intersection.t, intersection.t)) {
-            nearest_intersection = intersection;
+        if (intersection and inInterval(scene.eps, nearest.t, intersection.t)) {
+            nearest = intersection;
         }
     }
-    return nearest_intersection;
+    return nearest;
 }
 
 glm::vec3 sceneIntersectColor(const Scene& scene, Ray r) {
