@@ -13,7 +13,7 @@ glm::vec3 BlinnPhongMaterial::evaluate(const MaterialInput& input, const Scene& 
     return evaluate(input, scene, position, normal, view, diffuse, specular, specular_hardness);
 }
 
-glm::vec3 BlinnPhongMaterial::evaluate(const MaterialInput&, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, glm::vec3 specular, float specular_hardness) const noexcept {
+glm::vec3 BlinnPhongMaterial::evaluate(const MaterialInput&, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, glm::vec3 specular, float specular_hardness) const {
     glm::vec3 color{0.0f};
     for (const auto& light: scene.lights) {
         color += evaluate(scene, position, normal, view, diffuse, specular, specular_hardness, light.get());
@@ -21,7 +21,7 @@ glm::vec3 BlinnPhongMaterial::evaluate(const MaterialInput&, const Scene& scene,
     return color;
 }
 
-glm::vec3 BlinnPhongMaterial::evaluate(const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, glm::vec3 specular, float specular_hardness, const Light* light) const noexcept {
+glm::vec3 BlinnPhongMaterial::evaluate(const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, glm::vec3 specular, float specular_hardness, const Light* light) const {
     float light_intencity = light->getIntensity(scene, position);
     glm::vec3 light_dir = light->getDirection(position);
     return light_intencity *
@@ -40,7 +40,7 @@ glm::vec3 CookTorranceMaterial::evaluate(const MaterialInput& input, const Scene
     return evaluate(input, scene, position, normal, view, diffuse, roughness, metallic, eta);
 }
 
-glm::vec3 CookTorranceMaterial::evaluate(const MaterialInput&, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const noexcept {
+glm::vec3 CookTorranceMaterial::evaluate(const MaterialInput&, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const {
     glm::vec3 color{0.0f};
     for (const auto& light: scene.lights) {
         color += evaluate(scene, position, normal, view, diffuse, roughness, metallic, eta, light.get());
@@ -48,7 +48,7 @@ glm::vec3 CookTorranceMaterial::evaluate(const MaterialInput&, const Scene& scen
     return color;
 }
 
-glm::vec3 CookTorranceMaterial::evaluate(const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta, const Light* light) const noexcept {
+glm::vec3 CookTorranceMaterial::evaluate(const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta, const Light* light) const {
     float light_intencity = light->getIntensity(scene, position);
     glm::vec3 light_dir = light->getDirection(position);
     return light_intencity *
@@ -56,7 +56,7 @@ glm::vec3 CookTorranceMaterial::evaluate(const Scene& scene, glm::vec3 position,
            cookTorranceAbstractLight(normal, light_dir, view, diffuse, roughness, metallic, eta);
 }
 
-glm::vec3 MonteCarloCookTorranceMaterial::evaluate(const MaterialInput& input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const noexcept {
+glm::vec3 MonteCarloCookTorranceMaterial::evaluate(const MaterialInput& input, const Scene& scene, glm::vec3 position, glm::vec3 normal, glm::vec3 view, glm::vec3 diffuse, float roughness, float metallic, float eta) const {
     glm::vec3 color = CookTorranceMaterial::evaluate(input, scene, position, normal, view, diffuse, roughness, metallic, eta);
     if (input.bounces > 1) {
         auto [halfway, pdf] = ggxVisibilityImportanceSample(normal, view, roughness);

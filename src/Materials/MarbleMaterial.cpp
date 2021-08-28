@@ -12,13 +12,13 @@ protected:
     static constexpr float metallic = 0.0f;
     static constexpr float eta = 1.486f;
 
-    glm::vec3 getDiffuse(const MaterialInput&) const noexcept override;
-    float getRoughness(const MaterialInput&) const noexcept override { return roughness; }
-    float getMetallic(const MaterialInput&) const noexcept override { return metallic; }
-    float getEta(const MaterialInput&) const noexcept override { return eta; }
+    glm::vec3 getDiffuse(const MaterialInput&) const override;
+    float getRoughness(const MaterialInput&) const override { return roughness; }
+    float getMetallic(const MaterialInput&) const override { return metallic; }
+    float getEta(const MaterialInput&) const override { return eta; }
 };
 
-glm::vec3 Marble::getDiffuse(const MaterialInput& input) const noexcept {
+glm::vec3 Marble::getDiffuse(const MaterialInput& input) const {
     glm::vec3 diffuse_lf = srgbToLinear(glm::vec3{26.0f, 13.0f, 0.0f} / 255.0f);
     glm::vec3 diffuse_hf = srgbToLinear(glm::vec3{255.0f, 230.0f, 179.0f} / 255.0f);
     float mix_factor = 0.62f * glm::perlin(2.0f * input.position) +
